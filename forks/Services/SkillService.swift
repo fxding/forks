@@ -547,6 +547,73 @@ class SkillService: ObservableObject {
         return output
     }
     
+    // MARK: - Project Installation
+    
+    func installSkillsToProject(source: String = "vercel-labs/agent-skills", skillNames: [String], agentCliNames: [String], projectPath: String) async throws -> String {
+        // 1. Prepare ~/.forks
+        try FileManager.default.createDirectory(atPath: forksDir, withIntermediateDirectories: true)
+        
+        let forkPath: String
+        let relativePath: String
+        
+        // 2. Clone or use local source
+        if source.contains("://") || source.hasPrefix("git@") || !FileManager.default.fileExists(atPath: source) {
+            // It's a remote repo
+            let safeSourceName = source.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
+            relativePath = "repos/\(safeSourceName)"
+            forkPath = (forksDir as NSString).appendingPathComponent(relativePath)
+            
+            if FileManager.default.fileExists(atPath: forkPath) {
+                // Update cache
+                try await runShellCommand(command: "git", args: ["-C", forkPath, "pull"])
+            } else {
+                let url = (!source.contains("://") && !source.hasPrefix("git@")) ? "https://github.com/\(source).git" : source
+                try await runShellCommand(command: "git", args: ["clone", url, forkPath])
+            }
+        } else {
+            // It's a local folder: Use directly
+            var isDir: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: source, isDirectory: &isDir), isDir.boolValue else {
+                 throw NSError(domain: "SkillService", code: 404, userInfo: [NSLocalizedDescriptionKey: "Local source directory not found: \(source)"])
+            }
+            relativePath = "" // Empty means local direct path
+            forkPath = source
+        }
+        
+        // 3. Update Registry
+        var registry = getRegistry()
+        let now = Date()
+        for name in skillNames {
+            registry[name] = RegistryEntry(
+                originalSource: source,
+                relativeForkPath: relativePath,
+                installedDate: now,
+                lastChecked: now,
+                updateAvailable: false
+            )
+        }
+        saveRegistry(registry)
+        
+        // 4. Install to project path (not global)
+        var args = ["add-skill", forkPath]
+        for skill in skillNames {
+            args.append("--skill")
+            args.append(skill)
+        }
+        for agent in agentCliNames {
+            args.append("--agent")
+            args.append(agent)
+        }
+        // Use project path instead of global
+        args.append("--project")
+        args.append(projectPath)
+        args.append("--yes")
+        
+        let output = try await runShellCommand(command: "npx", args: args, environment: ["PATH": "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"])
+        
+        return output
+    }
+    
     // MARK: - Update Logic
     
     private func checkSourceStatus(originalSource: String, relativeForkPath: String) async throws -> (Bool, Date?) {

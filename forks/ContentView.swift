@@ -3,6 +3,7 @@ import SwiftUI
 enum NavigationItem: Hashable, CaseIterable, Identifiable {
     // "move installed skill up" -> Swap order
     case skills
+    case projects
     case agents
     case registry
     
@@ -12,6 +13,7 @@ enum NavigationItem: Hashable, CaseIterable, Identifiable {
         switch self {
         case .agents: return ("Agents", "cpu")
         case .skills: return ("Skills", "sparkles.rectangle.stack")
+        case .projects: return ("Projects", "folder.badge.gearshape")
         case .registry: return ("Registry", "list.bullet.rectangle.portrait.fill")
         }
     }
@@ -20,6 +22,7 @@ enum NavigationItem: Hashable, CaseIterable, Identifiable {
 struct ContentView: View {
     @State private var selection: NavigationItem? = .skills
     @StateObject private var skillService = SkillService() // Default to skills if moved up? User didn't specify default, but naturally top item is default.
+    @StateObject private var projectService = ProjectService()
     
 
     
@@ -39,6 +42,8 @@ struct ContentView: View {
                 switch selection {
                 case .skills, nil:
                     InstalledSkillsView(skillService: skillService)
+                case .projects:
+                    ProjectListView(projectService: projectService, skillService: skillService)
                 case .agents:
                     AppsView()
                 case .registry:
@@ -53,3 +58,4 @@ struct ContentView: View {
         }
     }
 }
+
