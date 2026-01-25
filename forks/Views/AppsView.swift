@@ -20,26 +20,25 @@ struct AppsView: View {
                                     .cornerRadius(8)
                                 
                                 VStack(alignment: .leading, spacing: 4) {
-                                    HStack {
-                                        Text(agent.name)
-                                            .font(.headline)
-                                        
-                                        Text("Detected")
-                                            .font(.caption2)
-                                            .padding(.horizontal, 6)
-                                            .padding(.vertical, 2)
-                                            .background(Color.green.opacity(0.1))
-                                            .foregroundColor(.green)
-                                            .cornerRadius(10)
-                                    }
+                                    Text(agent.name)
+                                        .font(.headline)
                                     
-                                    Text(agent.cliName)
-                                        .font(.caption)
-                                        .padding(.horizontal, 4)
-                                        .padding(.vertical, 2)
-                                        .background(Color.secondary.opacity(0.1))
-                                        .cornerRadius(4)
-                                        .foregroundColor(.secondary)
+                                    HStack(spacing: 8) {
+                                        Text(agent.cliName)
+                                            .font(.caption)
+                                            .padding(.horizontal, 4)
+                                            .padding(.vertical, 2)
+                                            .background(Color.secondary.opacity(0.1))
+                                            .cornerRadius(4)
+                                            .foregroundColor(.secondary)
+                                        
+                                        Text(agent.globalPath)
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                            .lineLimit(1)
+                                            .truncationMode(.middle)
+                                            .frame(maxWidth: 250, alignment: .leading)
+                                    }
                                 }
                                 
                                 Spacer()

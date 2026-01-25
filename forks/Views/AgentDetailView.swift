@@ -8,6 +8,7 @@ struct AgentDetailView: View {
     @State private var removingSkill: String?
     @State private var showConfirm = false
     @State private var skillToUninstall: String?
+    @State private var showRemoveAllConfirm = false
     
     var agentSkills: [InstalledSkill] {
         skillService.installedSkills.filter { $0.agents.contains(agentName) }
@@ -90,12 +91,20 @@ struct AgentDetailView: View {
                  HStack {
                     Spacer()
                     Button("Remove All Skills", role: .destructive) {
-                        removeAll()
+                        showRemoveAllConfirm = true
                     }
                     .padding()
                 }
                 .background(Color.red.opacity(0.05))
             }
+        }
+        .confirmationDialog("Remove All Skills?", isPresented: $showRemoveAllConfirm) {
+            Button("Remove All \(agentSkills.count) Skills", role: .destructive) {
+                removeAll()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Are you sure you want to remove all \(agentSkills.count) skills from \(agentName)? This cannot be undone.")
         }
         .navigationTitle(agentName)
     }

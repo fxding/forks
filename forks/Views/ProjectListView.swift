@@ -18,107 +18,101 @@ struct ProjectListView: View {
                         description: Text("Add a project to manage its local skills.")
                     )
                 } else {
-                    Table(projectService.projects, selection: $selectedProjectId) {
-                        TableColumn("Name") { project in
-                            HStack(spacing: 10) {
-                                Image(systemName: "folder.fill")
-                                    .foregroundColor(.blue)
-                                Text(project.name)
-                                    .font(.headline)
-                            }
-                        }
-                        .width(min: 150, ideal: 200)
-                        
-                        TableColumn("Path") { project in
-                            Text(project.path)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                                .font(.system(.body, design: .monospaced))
-                                .foregroundColor(.secondary)
-                        }
-                        .width(min: 200, ideal: 400)
-                        
-                        TableColumn("Agents") { project in
-                            let agents = projectService.getProjectAgents(project: project)
-                            if agents.isEmpty {
-                                Text("—")
-                                    .foregroundColor(.secondary)
-                            } else {
-                                HStack(spacing: 4) {
-                                    ForEach(agents.prefix(3), id: \.name) { agent in
-                                        Text(agent.name)
-                                            .font(.caption2)
-                                            .padding(.horizontal, 6)
-                                            .padding(.vertical, 2)
-                                            .background(agentColor(agent.name).opacity(0.1))
-                                            .foregroundColor(agentColor(agent.name))
-                                            .cornerRadius(4)
-                                    }
-                                    if agents.count > 3 {
-                                        Text("+\(agents.count - 3)")
-                                            .font(.caption2)
+
+                    List {
+                        ForEach(projectService.projects) { project in
+                            NavigationLink(destination: ProjectDetailView(project: project, projectService: projectService, skillService: skillService)) {
+                                HStack(spacing: 16) {
+                                    // Icon
+                                    Image(systemName: "folder.fill")
+                                        .font(.title2)
+                                        .padding(10)
+                                        .background(Color.blue.opacity(0.1))
+                                        .foregroundColor(.blue)
+                                        .cornerRadius(8)
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(project.name)
+                                            .font(.headline)
+                                        
+                                        Text(project.path)
+                                            .font(.caption)
                                             .foregroundColor(.secondary)
+                                            .lineLimit(1)
+                                            .truncationMode(.middle)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    // Agents Summary
+                                    let agents = projectService.getProjectAgents(project: project)
+                                    if !agents.isEmpty {
+                                        HStack(spacing: 4) {
+                                            ForEach(agents.prefix(3), id: \.name) { agent in
+                                                Text(agent.name)
+                                                    .font(.caption2)
+                                                    .padding(.horizontal, 6)
+                                                    .padding(.vertical, 2)
+                                                    .background(agentColor(agent.name).opacity(0.1))
+                                                    .foregroundColor(agentColor(agent.name))
+                                                    .cornerRadius(4)
+                                            }
+                                            if agents.count > 3 {
+                                                Text("+\(agents.count - 3)")
+                                                    .font(.caption2)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Skills Count
+                                    let count = projectService.getAllProjectSkillsCount(project: project)
+                                    if count > 0 {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "sparkles")
+                                                .font(.caption)
+                                            Text("\(count)")
+                                                .fontWeight(.medium)
+                                        }
+                                        .foregroundColor(.blue)
+                                        .padding(.leading, 8)
+                                    } else {
+                                        Text("—")
+                                            .foregroundColor(.secondary)
+                                            .padding(.leading, 8)
+                                    }
+                                    
+                                    // Actions
+                                    HStack(spacing: 8) {
+                                        Button {
+                                            NSWorkspace.shared.open(URL(fileURLWithPath: project.path))
+                                        } label: {
+                                            Image(systemName: "folder")
+                                                .foregroundColor(.secondary)
+                                        }
+                                        .buttonStyle(.borderless)
+                                        .help("Open in Finder")
+                                        .padding(.leading, 8)
                                     }
                                 }
+                                .padding(.vertical, 4)
                             }
-                        }
-                        .width(min: 100, ideal: 180)
-                        
-                        TableColumn("Skills") { project in
-                            let count = projectService.getAllProjectSkillsCount(project: project)
-                            if count > 0 {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "sparkles")
-                                        .font(.caption)
-                                    Text("\(count)")
-                                        .fontWeight(.medium)
+                            .contextMenu {
+                                Button(role: .destructive) {
+                                    projectToDelete = project
+                                } label: {
+                                    Label("Remove Project", systemImage: "trash")
                                 }
-                                .foregroundColor(.blue)
-                            } else {
-                                Text("—")
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                        .width(60)
-                        
-                        TableColumn("") { project in
-                            HStack(spacing: 8) {
+                                
                                 Button {
                                     NSWorkspace.shared.open(URL(fileURLWithPath: project.path))
                                 } label: {
-                                    Image(systemName: "folder")
-                                        .foregroundColor(.secondary)
-                                }
-                                .buttonStyle(.plain)
-                                .help("Open in Finder")
-                                
-                                Button {
-                                    projectToDelete = project
-                                } label: {
-                                    Image(systemName: "trash")
-                                        .foregroundColor(.red)
-                                }
-                                .buttonStyle(.plain)
-                                .help("Remove Project")
-                                
-                                NavigationLink(value: project) {
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(.secondary)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .width(90)
-                    }
-                    .contextMenu(forSelectionType: UUID.self) { ids in
-                        if let id = ids.first {
-                            Button("Remove Project", role: .destructive) {
-                                if let project = projectService.projects.first(where: { $0.id == id }) {
-                                    projectToDelete = project
+                                    Label("Open in Finder", systemImage: "folder")
                                 }
                             }
                         }
                     }
+                    .listStyle(.inset)
                 }
             }
             .navigationTitle("Projects")

@@ -8,6 +8,7 @@ struct RegistrySourceDetailView: View {
     @State private var selectedSkillNames: Set<String> = []
     @State private var searchText = ""
     @State private var showInstallSheet = false
+    @State private var isLoading = false
     
     var filteredSkills: [Skill] {
         if searchText.isEmpty {
@@ -75,10 +76,14 @@ struct RegistrySourceDetailView: View {
             .overlay(Divider(), alignment: .bottom)
             
             // Skills List
-            if availableSkills.isEmpty {
-                ContentUnavailableView {
-                    Label("Loading Skills...", systemImage: "rays")
+            if isLoading {
+                VStack {
+                    Spacer()
+                    ProgressView("Loading skills...")
+                    Spacer()
                 }
+            } else if availableSkills.isEmpty {
+                ContentUnavailableView("No Skills Found", systemImage: "sparkles", description: Text("No skills found in this source."))
             } else {
                 List {
                     ForEach(filteredSkills, id: \.name) { skill in
@@ -118,15 +123,14 @@ struct RegistrySourceDetailView: View {
     }
     
     private func loadSkills() {
-        // Load skills from the source
-        // This might be blocking if not async, but getSkillsInSource is synchronous effectively reading files.
-        // Better to run in Task
+        isLoading = true
         Task {
             let skills = await Task.detached {
                 await MainActor.run { skillService.getSkillsInSource(source: source.path) }
             }.value
             await MainActor.run {
                 self.availableSkills = skills
+                self.isLoading = false
             }
         }
     }

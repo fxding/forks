@@ -58,8 +58,10 @@ struct ProjectDetailView: View {
             )
         }
         .onAppear {
-            // Expand all agents by default
-            expandedAgents = Set(detectedAgents.map { $0.name })
+            // Only expand agents that have skills
+            expandedAgents = Set(detectedAgents.filter { agent in
+                !projectService.getProjectSkills(project: project, agent: agent).isEmpty
+            }.map { $0.name })
         }
     }
 }

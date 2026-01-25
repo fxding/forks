@@ -5,6 +5,7 @@ struct RegistryView: View {
     @State private var sortOrder = [KeyPathComparator(\SkillService.RegistrySource.path)]
     @State private var selectedSourceId: String?
     @State private var showAddSourceSheet = false
+    @State private var isRefreshing = false
 
     var body: some View {
         NavigationStack {
@@ -12,100 +13,131 @@ struct RegistryView: View {
                 if skillService.registrySources.isEmpty {
                     ContentUnavailableView("Registry Empty", systemImage: "externaldrive", description: Text("Install skills to populate the registry."))
                 } else {
-                    Table(skillService.registrySources, selection: $selectedSourceId, sortOrder: $sortOrder) {
-                        TableColumn("Source", value: \.path) { source in
-                                Text(source.path)
-                                    .lineLimit(1)
-                                    .truncationMode(.middle)
-                                    .font(.system(.body, design: .monospaced))
 
-                            .help(source.path)
-                        }
-                        .width(min: 200, ideal: 400)
-
-                        TableColumn("Type", value: \.type) { source in
-                             Text(source.type)
-                                .font(.caption)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(source.type == "Git" ? Color.blue.opacity(0.1) : Color.orange.opacity(0.1))
-                                .foregroundColor(source.type == "Git" ? .blue : .orange)
-                                .cornerRadius(4)
-                        }
-                        .width(60)
-
-                        TableColumn("Last Checked") { source in
-                            if let lastChecked = source.lastChecked {
-                                Text(lastChecked.formatted(date: .numeric, time: .shortened))
-                                    .foregroundColor(.secondary)
-                            } else {
-                                Text("Never")
-                                    .foregroundColor(.secondary)
+                    List {
+                        ForEach(skillService.registrySources) { source in
+                            NavigationLink(destination: RegistrySourceDetailView(source: source, skillService: skillService)) {
+                                HStack(spacing: 16) {
+                                    // Icon
+                                    Image(systemName: source.type == "Git" ? "globe" : "folder")
+                                        .font(.title2)
+                                        .padding(10)
+                                        .background(
+                                            (source.type == "Git" ? Color.blue : Color.orange).opacity(0.1)
+                                        )
+                                        .foregroundColor(source.type == "Git" ? .blue : .orange)
+                                        .cornerRadius(8)
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(source.path)
+                                            .font(.headline)
+                                            .lineLimit(1)
+                                            .truncationMode(.middle)
+                                        
+                                        HStack(spacing: 8) {
+                                            Text(source.type)
+                                                .font(.caption2)
+                                                .padding(.horizontal, 6)
+                                                .padding(.vertical, 2)
+                                                .background(
+                                                    (source.type == "Git" ? Color.blue : Color.orange).opacity(0.1)
+                                                )
+                                                .foregroundColor(source.type == "Git" ? .blue : .orange)
+                                                .cornerRadius(4)
+                                            
+                                            if let lastChecked = source.lastChecked {
+                                                Text("Checked \(lastChecked.formatted(date: .numeric, time: .shortened))")
+                                                    .font(.caption)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                        }
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    // Summary Info (Skills)
+                                    if !source.skills.isEmpty {
+                                        VStack(alignment: .trailing, spacing: 2) {
+                                            HStack(spacing: 4) {
+                                                Image(systemName: "sparkles")
+                                                    .font(.caption)
+                                                Text("\(source.skills.count)")
+                                                    .font(.headline)
+                                            }
+                                            .foregroundColor(.blue)
+                                            
+                                            Text(source.skills.prefix(2).joined(separator: ", ") + (source.skills.count > 2 ? " +\(source.skills.count - 2)" : ""))
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                                .lineLimit(1)
+                                                .frame(maxWidth: 150, alignment: .trailing)
+                                        }
+                                    } else {
+                                        Text("—")
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    
+                                    // Actions
+                                    HStack(spacing: 0) {
+                                        Button {
+                                            if source.type == "Local" {
+                                                NSWorkspace.shared.open(URL(fileURLWithPath: source.path))
+                                            } else {
+                                                openWebLink(source: source.path)
+                                            }
+                                        } label: {
+                                            Image(systemName: source.type == "Git" ? "safari" : "folder")
+                                                .foregroundColor(.secondary)
+                                        }
+                                        .buttonStyle(.borderless)
+                                        .help("Open in \(source.type == "Git" ? "Browser" : "Finder")")
+                                        .padding(.leading, 8)
+                                    }
+                                }
+                                .padding(.vertical, 4)
                             }
-                        }
-                        .width(120)
-
-                        TableColumn("Skills") { source in
-                            Text(source.skills.joined(separator: ", "))
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        TableColumn("") { source in
-                            HStack {
-                                // Open Repo/Folder
+                            .contextMenu {
+                                Button(role: .destructive) {
+                                    skillService.removeRegistrySource(source: source.id)
+                                } label: {
+                                    Label("Remove Source", systemImage: "trash")
+                                }
+                                
                                 Button {
                                     if source.type == "Local" {
                                         NSWorkspace.shared.open(URL(fileURLWithPath: source.path))
                                     } else {
-                                        var urlStr = source.path
-                                        if !urlStr.lowercased().hasPrefix("http") && !urlStr.lowercased().hasPrefix("https") {
-                                            if urlStr.hasPrefix("git@") {
-                                                urlStr = urlStr.replacingOccurrences(of: ":", with: "/")
-                                                urlStr = urlStr.replacingOccurrences(of: "git@", with: "https://")
-                                            } else {
-                                                urlStr = "https://github.com/\(urlStr)"
-                                            }
-                                        }
-                                        if let url = URL(string: urlStr) {
-                                            NSWorkspace.shared.open(url)
-                                        }
+                                        openWebLink(source: source.path)
                                     }
                                 } label: {
-                                    Image(systemName: source.type == "Git" ? "safari" : "folder")
-                                        .foregroundColor(.secondary)
+                                    Label("Open", systemImage: source.type == "Git" ? "safari" : "folder")
                                 }
-                                .buttonStyle(.plain)
-                                .help("Open in \(source.type == "Git" ? "Browser" : "Finder")")
-                                
-                                // Navigation Chevron
-                                NavigationLink(value: source) {
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(.secondary)
-                                }
-                                .buttonStyle(.plain)
                             }
                         }
-                        .width(60)
                     }
-                    .onChange(of: sortOrder) { newOrder in
-                        var items = skillService.registrySources
-                        items.sort(using: newOrder)
-                        skillService.registrySources = items
-                    }
+                    .listStyle(.inset)
                 }
             }
             .navigationTitle("Registry")
+            .overlay {
+                if isRefreshing {
+                    ProgressView("Checking for updates...")
+                        .padding()
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: {
+                        isRefreshing = true
                         Task {
                             await skillService.refreshRegistry()
+                            isRefreshing = false
                         }
                     }) {
                         Label("Check for Updates", systemImage: "arrow.clockwise")
                     }
+                    .disabled(isRefreshing)
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showAddSourceSheet = true }) {
@@ -118,13 +150,30 @@ struct RegistryView: View {
             }
             .onAppear {
                  skillService.getInstalledSkills() // Refresh status
+                 isRefreshing = true
                  Task {
                      await skillService.refreshRegistry()
+                     isRefreshing = false
                  }
             }
             .navigationDestination(for: SkillService.RegistrySource.self) { source in
                 RegistrySourceDetailView(source: source, skillService: skillService)
             }
+        }
+    }
+    
+    private func openWebLink(source: String) {
+        var urlStr = source
+        if !urlStr.lowercased().hasPrefix("http") && !urlStr.lowercased().hasPrefix("https") {
+            if urlStr.hasPrefix("git@") {
+                urlStr = urlStr.replacingOccurrences(of: ":", with: "/")
+                urlStr = urlStr.replacingOccurrences(of: "git@", with: "https://")
+            } else {
+                urlStr = "https://github.com/\(urlStr)"
+            }
+        }
+        if let url = URL(string: urlStr) {
+            NSWorkspace.shared.open(url)
         }
     }
 }
@@ -138,7 +187,7 @@ struct AddSourceSheet: View {
     @State private var errorMessage: String?
     
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 16) {
             Text("Add Registry Source")
                 .font(.headline)
             
@@ -222,7 +271,7 @@ struct AddSourceSheet: View {
             }
             .padding(.top, 8)
         }
-        .padding(24)
+        .padding(20)
         .frame(width: 450)
     }
     
