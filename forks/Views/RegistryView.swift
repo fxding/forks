@@ -119,25 +119,24 @@ struct RegistryView: View {
                 }
             }
             .navigationTitle("Registry")
-            .overlay {
-                if isRefreshing {
-                    ProgressView("Checking for updates...")
-                        .padding()
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
-                }
-            }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button(action: {
-                        isRefreshing = true
-                        Task {
-                            await skillService.refreshRegistry()
-                            isRefreshing = false
+                    if isRefreshing {
+                        ProgressView()
+                            .controlSize(.small)
+                            .padding(.trailing, 8)
+                    } else {
+                        Button(action: {
+                            isRefreshing = true
+                            Task {
+                                await skillService.refreshRegistry()
+                                isRefreshing = false
+                            }
+                        }) {
+                            Label("Check for Updates", systemImage: "arrow.clockwise")
                         }
-                    }) {
-                        Label("Check for Updates", systemImage: "arrow.clockwise")
+                        .disabled(isRefreshing)
                     }
-                    .disabled(isRefreshing)
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showAddSourceSheet = true }) {

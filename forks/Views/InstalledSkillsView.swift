@@ -67,14 +67,16 @@ struct InstalledSkillsView: View {
                 .overlay(Divider(), alignment: .bottom)
             }
             
-            List {
-                if filteredSkills.isEmpty {
-                    ContentUnavailableView(
-                        searchText.isEmpty ? "No Skills Installed" : "No Matches",
-                        systemImage: searchText.isEmpty ? "star.slash" : "magnifyingglass",
-                        description: Text(searchText.isEmpty ? "Install skills using the + button." : "Try a different search term or filter.")
-                    )
-                } else {
+            if filteredSkills.isEmpty {
+                Spacer()
+                ContentUnavailableView(
+                    searchText.isEmpty ? "No Skills Installed" : "No Matches",
+                    systemImage: searchText.isEmpty ? "star.slash" : "magnifyingglass",
+                    description: Text(searchText.isEmpty ? "Install skills using the + button." : "Try a different search term or filter.")
+                )
+                Spacer()
+            } else {
+                List {
                     ForEach(filteredSkills) { skill in
                         NavigationLink(destination: SkillDetailView(skillName: skill.name, skillService: skillService, agentService: agentService)) {
                             SkillRow(

@@ -8,6 +8,9 @@ struct SkillDetailView: View {
     @State private var processingAgent: String?
     @State private var showConfirm = false
     @State private var agentToUninstall: String?
+    @State private var showReinstallAllConfirm = false
+    @State private var showRemoveAllConfirm = false
+    @State private var isProcessingBulk = false
     
     var skill: InstalledSkill? {
         skillService.installedSkills.first { $0.name == skillName }
@@ -94,32 +97,41 @@ struct SkillDetailView: View {
                 .padding()
                 .background(Color(nsColor: .controlBackgroundColor))
                 
-                // Update/Check buttons toolbar
-                if skill.source != nil {
-                    HStack {
-                        if skill.updateAvailable {
-                            Button {
-                                updateSkill()
-                            } label: {
-                                Label("Update All Agents", systemImage: "arrow.down.circle.fill")
-                            }
-                            .buttonStyle(.borderedProminent)
-                        }
-                        
-                        Button {
-                            checkForUpdates()
-                        } label: {
-                            Label("Check for Updates", systemImage: "arrow.clockwise")
-                        }
-                        .buttonStyle(.bordered)
-                        .disabled(processingAgent != nil)
-                        
-                        Spacer()
+                // Bulk actions toolbar
+                HStack {
+                    if isProcessingBulk {
+                        ProgressView().controlSize(.small)
+                            .padding(.leading, 8)
                     }
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                    .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                    
+                    if skill.updateAvailable {
+                        Button {
+                            updateSkill()
+                        } label: {
+                            Label("Update All", systemImage: "arrow.down.circle.fill")
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(isProcessingBulk)
+                    }
+                    
+                    Spacer()
+                    
+                    Button(action: { showReinstallAllConfirm = true }) {
+                        Label("Reinstall on All", systemImage: "arrow.clockwise.circle")
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(isProcessingBulk)
+                    
+                    Button(role: .destructive, action: { showRemoveAllConfirm = true }) {
+                        Label("Remove from All", systemImage: "trash")
+                    }
+                    .buttonStyle(.bordered)
+                    .foregroundColor(.red)
+                    .disabled(isProcessingBulk)
                 }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                 
                 Divider()
                 
@@ -165,6 +177,7 @@ struct SkillDetailView: View {
                                 }
                                 .buttonStyle(.borderless)
                                 .help("Uninstall from \(status.agent.name)")
+                                .disabled(isProcessingBulk)
                             } else {
                                 Button(action: {
                                     install(to: status.agent.cliName, name: status.agent.name)
@@ -174,6 +187,7 @@ struct SkillDetailView: View {
                                 }
                                 .buttonStyle(.borderless)
                                 .help("Install to \(status.agent.name)")
+                                .disabled(isProcessingBulk)
                             }
                         }
                     }
@@ -186,6 +200,22 @@ struct SkillDetailView: View {
                     Button("Cancel", role: .cancel) {}
                 } message: { agentName in
                     Text("Are you sure you want to remove \(skill.name) from \(agentName)?")
+                }
+                .confirmationDialog("Remove from All Agents?", isPresented: $showRemoveAllConfirm) {
+                    Button("Remove All", role: .destructive) {
+                        removeAll()
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Are you sure you want to remove \"\(skill.name)\" from all \(skill.agents.count) agents? This cannot be undone.")
+                }
+                .confirmationDialog("Reinstall on All Agents?", isPresented: $showReinstallAllConfirm) {
+                    Button("Reinstall All") {
+                        reinstallAll()
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("This will reinstall \"\(skill.name)\" on all \(skill.agents.count) agents.")
                 }
                 
             } else {
@@ -227,24 +257,9 @@ struct SkillDetailView: View {
         }
     }
     
-    private func checkForUpdates() {
-        guard let skill = skill, let source = skill.source else { return }
-        
-        Task {
-            for agentName in skill.agents {
-                do {
-                    _ = try await skillService.checkForUpdates(skill: skill, agentName: agentName)
-                } catch {
-                    print("Error checking updates for \(agentName): \(error)")
-                }
-            }
-            skillService.getInstalledSkills()
-        }
-    }
-    
     private func updateSkill() {
         guard let skill = skill, let source = skill.source else { return }
-        
+        isProcessingBulk = true
         Task {
             for agentName in skill.agents {
                 do {
@@ -254,6 +269,47 @@ struct SkillDetailView: View {
                 }
             }
             skillService.getInstalledSkills()
+            isProcessingBulk = false
+        }
+    }
+    
+    private func reinstallAll() {
+        guard let skill = skill, let source = skill.source else { return }
+        isProcessingBulk = true
+        Task {
+            for agentName in skill.agents {
+                do {
+                    let agentObj = agentService.agents.first { $0.name == agentName }
+                    if let agentCli = agentObj?.cliName {
+                        _ = try await skillService.installSkills(
+                            source: source,
+                            skillNames: [skillName],
+                            agentCliNames: [agentCli],
+                            global: true
+                        )
+                    }
+                } catch {
+                    print("Error reinstalling on \(agentName): \(error)")
+                }
+            }
+            skillService.getInstalledSkills()
+            isProcessingBulk = false
+        }
+    }
+    
+    private func removeAll() {
+        guard let skill = skill else { return }
+        isProcessingBulk = true
+        Task {
+            for agentName in skill.agents {
+                do {
+                    try skillService.uninstallSkill(skillName: skillName, agentName: agentName)
+                } catch {
+                    print("Error removing from \(agentName): \(error)")
+                }
+            }
+            skillService.getInstalledSkills()
+            isProcessingBulk = false
         }
     }
     
