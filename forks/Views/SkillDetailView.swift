@@ -117,13 +117,13 @@ struct SkillDetailView: View {
                     Spacer()
                     
                     Button(action: { showReinstallAllConfirm = true }) {
-                        Label("Reinstall on All", systemImage: "arrow.clockwise.circle")
+                        Label("Reinstall", systemImage: "arrow.clockwise.circle")
                     }
                     .buttonStyle(.bordered)
                     .disabled(isProcessingBulk)
                     
                     Button(role: .destructive, action: { showRemoveAllConfirm = true }) {
-                        Label("Remove from All", systemImage: "trash")
+                        Label("Remove All", systemImage: "trash")
                     }
                     .buttonStyle(.bordered)
                     .foregroundColor(.red)
@@ -210,7 +210,7 @@ struct SkillDetailView: View {
                     Text("Are you sure you want to remove \"\(skill.name)\" from all \(skill.agents.count) agents? This cannot be undone.")
                 }
                 .confirmationDialog("Reinstall on All Agents?", isPresented: $showReinstallAllConfirm) {
-                    Button("Reinstall All") {
+                    Button("Reinstall") {
                         reinstallAll()
                     }
                     Button("Cancel", role: .cancel) {}
