@@ -6,6 +6,9 @@ struct DashboardView: View {
     @ObservedObject var projectService: ProjectService
     @StateObject private var agentService = AgentService()
     
+    @State private var showAddSourceSheet = false
+    @State private var errorMessage: String?
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 40) {
@@ -46,28 +49,48 @@ struct DashboardView: View {
                     }
                 }
                 
-                // Secondary Section: Success / Registry
-                HStack(spacing: 24) {
-                    StatCard(
-                        title: "Registry Sources",
-                        value: "\(skillService.registrySources.count)",
-                        icon: "list.bullet.rectangle.portrait.fill",
-                        color: .green,
-                        subtitle: "skill repositories"
-                    ) {
+                // Quick Actions Section
+                VStack(alignment: .leading, spacing: 20) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "bolt.fill")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                        Text("Quick Actions")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                    }
+                    
+                    HStack(spacing: 24) {
+                        DashboardActionCard(
+                            title: "Add Project",
+                            description: "Manage skills in a local folder",
+                            icon: "folder.badge.plus",
+                            color: .orange
+                        ) {
+                            addProject()
+                        }
+                        
+                        DashboardActionCard(
+                            title: "Add Registry",
+                            description: "Add new skill repository",
+                            icon: "plus.rectangle.on.folder",
+                            color: .blue
+                        ) {
+                            showAddSourceSheet = true
+                        }
+                        
+                        Spacer()
+                    }
+                }
+                
+                // Secondary Section: Updates Alert (if any)
+                let updatesCount = skillService.installedSkills.filter { $0.updateAvailable }.count
+                if updatesCount > 0 {
+                    UpdateAlertCard(count: updatesCount) {
                         selection = .registry
                     }
-                    .frame(maxWidth: 320)
-                    
-                    let updatesCount = skillService.installedSkills.filter { $0.updateAvailable }.count
-                    if updatesCount > 0 {
-                        UpdateAlertCard(count: updatesCount) {
-                            selection = .registry
-                        }
-                        .frame(maxWidth: 500)
-                    }
-                    
-                    Spacer()
+                    .frame(maxWidth: 500)
+                    .padding(.bottom, 20)
                 }
                 
                 // Agents (Providers) Section
@@ -94,14 +117,85 @@ struct DashboardView: View {
             .padding(40)
         }
         .navigationTitle("Dashboard")
+        .sheet(isPresented: $showAddSourceSheet) {
+            AddSourceSheet(skillService: skillService)
+        }
+        .alert("Error", isPresented: .constant(errorMessage != nil)) {
+            Button("OK") { errorMessage = nil }
+        } message: {
+            Text(errorMessage ?? "")
+        }
         .onAppear {
             skillService.getInstalledSkills()
             agentService.refreshAgents()
         }
     }
     
+    private func addProject() {
+        let openPanel = NSOpenPanel()
+        openPanel.canChooseFiles = false
+        openPanel.canChooseDirectories = true
+        openPanel.allowsMultipleSelection = false
+        openPanel.message = "Select a project folder"
+        openPanel.begin { response in
+            if response == .OK, let url = openPanel.url {
+                do {
+                    try projectService.addProject(path: url.path)
+                } catch {
+                    errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+    
     private func getSkillCount(for agent: Agent) -> Int {
         skillService.installedSkills.filter { $0.agents.contains(agent.name) }.count
+    }
+}
+
+struct DashboardActionCard: View {
+    let title: String
+    let description: String
+    let icon: String
+    let color: Color
+    let action: () -> Void
+    
+    @State private var isHovered = false
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 16) {
+                Image(systemName: icon)
+                    .font(.title2)
+                    .padding(12)
+                    .background(color.opacity(0.1))
+                    .foregroundColor(color)
+                    .cornerRadius(12)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.headline)
+                    Text(description)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .background(Color(NSColor.windowBackgroundColor).opacity(0.8))
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isHovered ? color.opacity(0.3) : Color.primary.opacity(0.05), lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(isHovered ? 0.04 : 0.01), radius: 8, x: 0, y: 4)
+            .scaleEffect(isHovered ? 1.02 : 1.0)
+            .animation(.spring(response: 0.2, dampingFraction: 0.7), value: isHovered)
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            isHovered = hovering
+        }
     }
 }
 
