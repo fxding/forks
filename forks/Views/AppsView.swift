@@ -6,67 +6,72 @@ struct AppsView: View {
     
     var body: some View {
         NavigationStack {
-            List(agentService.agents.filter { $0.detected }) { agent in
-                NavigationLink(destination: AgentDetailView(agentName: agent.name, skillService: skillService)) {
-                    HStack(spacing: 16) {
-                        // Icon
-                        Image(systemName: "cpu.fill")
-                            .font(.title2)
-                            .padding(10)
-                            .background(agentColor(agent.name).opacity(0.1))
-                            .foregroundColor(agentColor(agent.name))
-                            .cornerRadius(8)
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text(agent.name)
-                                    .font(.headline)
+            List {
+                Section("Agents") {
+                    ForEach(agentService.agents.filter { $0.detected }) { agent in
+                        NavigationLink(destination: AgentDetailView(agentName: agent.name, skillService: skillService)) {
+                            HStack(spacing: 16) {
+                                // Icon
+                                Image(systemName: "cpu.fill")
+                                    .font(.title2)
+                                    .padding(10)
+                                    .background(agentColor(agent.name).opacity(0.1))
+                                    .foregroundColor(agentColor(agent.name))
+                                    .cornerRadius(8)
                                 
-                                Text("Detected")
-                                    .font(.caption2)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Color.green.opacity(0.1))
-                                    .foregroundColor(.green)
-                                    .cornerRadius(10)
-                            }
-                            
-                            Text(agent.cliName)
-                                .font(.caption)
-                                .padding(.horizontal, 4)
-                                .padding(.vertical, 2)
-                                .background(Color.secondary.opacity(0.1))
-                                .cornerRadius(4)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Spacer()
-                        
-                        // Summary Info (Skills)
-                        let agentSkills = skillService.installedSkills.filter { $0.agents.contains(agent.name) }
-                        if !agentSkills.isEmpty {
-                            VStack(alignment: .trailing, spacing: 2) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "sparkles")
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack {
+                                        Text(agent.name)
+                                            .font(.headline)
+                                        
+                                        Text("Detected")
+                                            .font(.caption2)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.green.opacity(0.1))
+                                            .foregroundColor(.green)
+                                            .cornerRadius(10)
+                                    }
+                                    
+                                    Text(agent.cliName)
                                         .font(.caption)
-                                    Text("\(agentSkills.count)")
-                                        .font(.headline)
+                                        .padding(.horizontal, 4)
+                                        .padding(.vertical, 2)
+                                        .background(Color.secondary.opacity(0.1))
+                                        .cornerRadius(4)
+                                        .foregroundColor(.secondary)
                                 }
-                                .foregroundColor(.blue)
                                 
-                                Text(summaryString(for: agentSkills))
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                                    .frame(maxWidth: 150, alignment: .trailing)
+                                Spacer()
+                                
+                                // Summary Info (Skills)
+                                let agentSkills = skillService.installedSkills.filter { $0.agents.contains(agent.name) }
+                                if !agentSkills.isEmpty {
+                                    VStack(alignment: .trailing, spacing: 2) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "sparkles")
+                                                .font(.caption)
+                                            Text("\(agentSkills.count)")
+                                                .font(.headline)
+                                        }
+                                        .foregroundColor(.blue)
+                                        
+                                        Text(summaryString(for: agentSkills))
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(1)
+                                            .frame(maxWidth: 150, alignment: .trailing)
+                                    }
+                                } else {
+                                    Text("—")
+                                        .foregroundStyle(.secondary)
+                                }
                             }
-                        } else {
-                            Text("—")
-                                .foregroundStyle(.secondary)
+                            .padding(.vertical, 4)
                         }
                     }
-                    .padding(.vertical, 4)
                 }
+                
             }
             .navigationTitle("Agents")
             .onAppear {

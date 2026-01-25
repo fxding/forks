@@ -1,11 +1,16 @@
 import SwiftUI
 
 struct InstalledSkillsView: View {
-    @StateObject private var skillService = SkillService()
+    @ObservedObject var skillService: SkillService
     @StateObject private var agentService = AgentService()
     
     @State private var searchText = ""
     @State private var selectedAgentFilter: String? = nil
+    
+    // Add Skill State
+    @State private var showAddSkillDialog = false
+    @State private var newRepoUrl: String = "vercel-labs/agent-skills"
+    @State private var navigateToStore = false
     
     var filteredSkills: [InstalledSkill] {
         skillService.installedSkills.filter { skill in
@@ -88,13 +93,108 @@ struct InstalledSkillsView: View {
             }
             .navigationTitle("Skills")
             .searchable(text: $searchText, placement: .toolbar)
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button(action: { showAddSkillDialog = true }) {
+                        Label("Add Skill", systemImage: "plus")
+                    }
+                    .help("Install new skill")
+                }
+            }
+            .sheet(isPresented: $showAddSkillDialog) {
+                VStack(spacing: 24) {
+                    Text("Add Skill Source")
+                        .font(.headline)
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Enter a repository URL or select a local folder to add new capabilities to your agents.")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Examples:")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                            
+                            HStack(spacing: 4) {
+                                Image(systemName: "globe")
+                                    .font(.caption)
+                                Text("vercel-labs/agent-skills")
+                                    .font(.caption)
+                                    .monospaced()
+                            }
+                            .foregroundColor(.secondary)
+                            
+                            HStack(spacing: 4) {
+                                Image(systemName: "folder")
+                                    .font(.caption)
+                                Text("/Users/username/my-skills")
+                                    .font(.caption)
+                                    .monospaced()
+                            }
+                            .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Repository URL or Local Path")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                        
+                        HStack {
+                            TextField("user/repo or /path/to/skills", text: $newRepoUrl)
+                                .textFieldStyle(.roundedBorder)
+                            
+                            Button {
+                                let openPanel = NSOpenPanel()
+                                openPanel.canChooseFiles = false
+                                openPanel.canChooseDirectories = true
+                                openPanel.allowsMultipleSelection = false
+                                openPanel.begin { response in
+                                    if response == .OK, let url = openPanel.url {
+                                        newRepoUrl = url.path
+                                    }
+                                }
+                            } label: {
+                                Image(systemName: "folder")
+                            }
+                        }
+                    }
+                    
+                    HStack {
+                        Button("Cancel") {
+                            showAddSkillDialog = false
+                        }
+                        .keyboardShortcut(.cancelAction)
+                        
+                        Button("Browse Skills") {
+                            showAddSkillDialog = false
+                            navigateToStore = true
+                        }
+                        .keyboardShortcut(.defaultAction)
+                        .disabled(newRepoUrl.isEmpty)
+                    }
+                    .padding(.top, 8)
+                }
+                .padding(24)
+                .frame(width: 450)
+            }
+            .sheet(isPresented: $navigateToStore) {
+                NavigationStack {
+                    AvailableSkillsView(repoUrl: newRepoUrl)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("Close") { navigateToStore = false }
+                            }
+                        }
+                }
+                .frame(minWidth: 600, minHeight: 400)
+            }
             .onAppear {
                 skillService.getInstalledSkills()
                 agentService.refreshAgents()
-                skillService.startPeriodicUpdateChecks()
-            }
-            .onDisappear {
-                skillService.stopPeriodicUpdateChecks()
             }
         }
     }

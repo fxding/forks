@@ -5,6 +5,7 @@ import Combine
 class SkillService: ObservableObject {
     @Published var availableSkills: [Skill] = []
     @Published var installedSkills: [InstalledSkill] = []
+    @Published var registrySources: [RegistrySource] = []
     
     private let forksDir = NSString(string: "~/.forks").expandingTildeInPath
     
@@ -63,6 +64,7 @@ class SkillService: ObservableObject {
         }
         
         self.installedSkills = Array(skillMap.values).sorted { $0.name < $1.name }
+        self.registrySources = getRegistrySources()
     }
     
     func fetchSkills(source: String = "vercel-labs/agent-skills") async throws {
@@ -173,7 +175,8 @@ class SkillService: ObservableObject {
                 var isDir: ObjCBool = false
                 if FileManager.default.fileExists(atPath: itemPath.path, isDirectory: &isDir) {
                     if isDir.boolValue {
-                        if item.lastPathComponent != ".git" {
+                        let name = item.lastPathComponent
+                        if !name.hasPrefix(".") && name != "node_modules" && name != "dist" && name != "build" && name != "DerivedData" {
                             findSkillsInDir(dir: itemPath, skills: &skills, baseDir: baseDir)
                         }
                     } else if item.lastPathComponent == "SKILL.md" {
@@ -290,6 +293,7 @@ class SkillService: ObservableObject {
     // MARK: - Forks & Registry Management
     
     private let registryPath = NSString(string: "~/.forks/registry.json").expandingTildeInPath
+    private let sourcesRegistryPath = NSString(string: "~/.forks/sources.json").expandingTildeInPath
     
     struct RegistryEntry: Codable {
         let originalSource: String
@@ -297,6 +301,130 @@ class SkillService: ObservableObject {
         let installedDate: Date
         var lastChecked: Date?
         var updateAvailable: Bool
+    }
+    
+    public struct RegistrySource: Identifiable, Hashable {
+        public let id: String
+        public let type: String
+        public let path: String
+        public let updateAvailable: Bool
+        public let lastChecked: Date?
+        public let skills: [String]
+    }
+    
+    func getRegistrySources() -> [RegistrySource] {
+        let registry = getRegistry()
+        let trackedSources = getTrackedSources()
+        
+        var uniqueSources = trackedSources
+        for entry in registry.values {
+            uniqueSources.insert(entry.originalSource)
+        }
+        
+        return uniqueSources.map { source in
+            let skills = getSkillsInSource(source: source).map { $0.name }.sorted()
+            
+            // Determine type and update status
+            let type = (source.contains("://") || source.hasPrefix("git@") || !FileManager.default.fileExists(atPath: source)) ? "Git" : "Local"
+            var updateAvailable = false
+            var lastChecked: Date?
+            
+            // Check if any installed skill from this source has update available
+            for (_, entry) in registry {
+                if entry.originalSource == source {
+                    if entry.updateAvailable {
+                        updateAvailable = true
+                    }
+                    // Use the most recent check date
+                    if let checked = entry.lastChecked {
+                        if lastChecked == nil || checked > lastChecked! {
+                            lastChecked = checked
+                        }
+                    }
+                }
+            }
+            
+            return RegistrySource(
+                id: source,
+                type: type,
+                path: source,
+                updateAvailable: updateAvailable,
+                lastChecked: lastChecked,
+                skills: skills
+            )
+        }.sorted { $0.path < $1.path }
+    }
+    
+    // MARK: - Source Tracking Logic
+    
+    // Add a source manually without installing skills
+    func addRegistrySource(source: String) async throws {
+        // 1. Prepare ~/.forks
+        try FileManager.default.createDirectory(atPath: forksDir, withIntermediateDirectories: true)
+        
+        // 2. Clone/Validate
+        let relativePath: String
+        let forkPath: String
+        
+         if source.contains("://") || source.hasPrefix("git@") || !FileManager.default.fileExists(atPath: source) {
+            // It's a remote repo
+             let safeSourceName = source.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
+            relativePath = "repos/\(safeSourceName)"
+            forkPath = (forksDir as NSString).appendingPathComponent(relativePath)
+            
+            if FileManager.default.fileExists(atPath: forkPath) {
+                try await runShellCommand(command: "git", args: ["-C", forkPath, "pull"])
+            } else {
+                let url = (!source.contains("://") && !source.hasPrefix("git@")) ? "https://github.com/\(source).git" : source
+                try await runShellCommand(command: "git", args: ["clone", url, forkPath])
+            }
+        } else {
+            // Local folder: verify existence, do NOT copy
+            var isDir: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: source, isDirectory: &isDir), isDir.boolValue else {
+                throw NSError(domain: "SkillService", code: 404, userInfo: [NSLocalizedDescriptionKey: "Local source directory not found: \(source)"])
+            }
+            relativePath = "" // Empty means local direct path
+            forkPath = source
+        }
+        
+        // 3. Save to tracked sources
+        var tracked = getTrackedSources()
+        tracked.insert(source)
+        saveTrackedSources(tracked)
+        
+        // 4. Update UI
+        await MainActor.run {
+             self.registrySources = getRegistrySources()
+        }
+    }
+    
+    func removeRegistrySource(source: String) {
+        var tracked = getTrackedSources()
+        tracked.remove(source)
+        saveTrackedSources(tracked)
+        
+        // Note: We do NOT remove the files from ~/.forks because installed skills might depend on them.
+        // We only stop showing it as a tracked source if there are no skills.
+        // The UI will still show it if skills are installed.
+        
+        self.registrySources = getRegistrySources()
+    }
+    
+    private func getTrackedSources() -> Set<String> {
+        guard FileManager.default.fileExists(atPath: sourcesRegistryPath),
+              let data = try? Data(contentsOf: URL(fileURLWithPath: sourcesRegistryPath)),
+              let sources = try? JSONDecoder().decode([String].self, from: data) else {
+            return []
+        }
+        return Set(sources)
+    }
+    
+    private func saveTrackedSources(_ sources: Set<String>) {
+        try? FileManager.default.createDirectory(atPath: forksDir, withIntermediateDirectories: true)
+        if let data = try? JSONEncoder().encode(Array(sources)) {
+            try? data.write(to: URL(fileURLWithPath: sourcesRegistryPath))
+        }
     }
     
     private func getRegistry() -> [String: RegistryEntry] {
@@ -323,6 +451,30 @@ class SkillService: ObservableObject {
         return (nil, nil, false)
     }
     
+    // MARK: - Source Content Discovery
+    
+    func getSkillsInSource(source: String) -> [Skill] {
+        let forkPath = getForkPath(source: source)
+        var foundSkills: [Skill] = []
+        
+        if FileManager.default.fileExists(atPath: forkPath) {
+            findSkillsInDir(dir: URL(fileURLWithPath: forkPath), skills: &foundSkills, baseDir: URL(fileURLWithPath: forkPath))
+        }
+        
+        return foundSkills.sorted { $0.name < $1.name }
+    }
+    
+    private func getForkPath(source: String) -> String {
+        if source.contains("://") || source.hasPrefix("git@") || !FileManager.default.fileExists(atPath: source) {
+            let safeSourceName = source.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
+            let relativePath = "repos/\(safeSourceName)"
+            return (forksDir as NSString).appendingPathComponent(relativePath)
+        } else {
+             // Local: use source directly
+            return source
+        }
+    }
+
     // MARK: - Installation
     
     func installSkills(source: String = "vercel-labs/agent-skills", skillNames: [String], agentCliNames: [String], global: Bool = true) async throws -> String {
@@ -341,29 +493,20 @@ class SkillService: ObservableObject {
             forkPath = (forksDir as NSString).appendingPathComponent(relativePath)
             
             if FileManager.default.fileExists(atPath: forkPath) {
-                // Already exists, just ensure it's clean or pull? 
-                // User said "use git fetch", but for install we probably want the latest state or just use what we have?
-                // For a fresh install call, let's try to pull or fetch/reset to be safe, ensuring we install the latest intended.
-                // But for "install", we might assume the cache is okay OR we should update it.
-                // Let's do a quick pull to be helpful, or at least fetch.
-                // Actually, if it exists, let's treat it as "update cache"
+                // Update cache
                 try await runShellCommand(command: "git", args: ["-C", forkPath, "pull"])
             } else {
                 let url = (!source.contains("://") && !source.hasPrefix("git@")) ? "https://github.com/\(source).git" : source
                 try await runShellCommand(command: "git", args: ["clone", url, forkPath])
             }
         } else {
-            // It's a local folder
-            let folderName = (source as NSString).lastPathComponent
-            relativePath = "local/\(folderName)"
-            forkPath = (forksDir as NSString).appendingPathComponent(relativePath)
-            
-            // Remove existing copy if any to ensure fresh copy
-            if FileManager.default.fileExists(atPath: forkPath) {
-                try FileManager.default.removeItem(atPath: forkPath)
+            // It's a local folder: Use directly
+            var isDir: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: source, isDirectory: &isDir), isDir.boolValue else {
+                 throw NSError(domain: "SkillService", code: 404, userInfo: [NSLocalizedDescriptionKey: "Local source directory not found: \(source)"])
             }
-            try FileManager.default.createDirectory(atPath: (forkPath as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
-            try FileManager.default.copyItem(atPath: source, toPath: forkPath)
+            relativePath = "" // Empty means local direct path
+            forkPath = source
         }
         
         // 3. Update Registry
@@ -380,7 +523,7 @@ class SkillService: ObservableObject {
         }
         saveRegistry(registry)
         
-        // 4. Install from the Fork
+        // 4. Install from the Fork/Local Path
         var args = ["add-skill", forkPath]
         for skill in skillNames {
             args.append("--skill")
@@ -406,45 +549,46 @@ class SkillService: ObservableObject {
     
     // MARK: - Update Logic
     
+    private func checkSourceStatus(originalSource: String, relativeForkPath: String) async throws -> (Bool, Date?) {
+        let forkPath = getForkPath(source: originalSource)
+
+        if relativeForkPath.hasPrefix("repos/") {
+            // Git Logic: Fetch and check status
+            _ = try await runShellCommand(command: "git", args: ["-C", forkPath, "fetch"])
+            // Check if behind
+            let status = try await runShellCommand(command: "git", args: ["-C", forkPath, "status", "-uno"])
+            return (status.contains("Your branch is behind"), Date())
+        } else {
+            // Local Logic: Check existance and modification dates
+            var isDir: ObjCBool = false
+            if !FileManager.default.fileExists(atPath: originalSource, isDirectory: &isDir) {
+                throw NSError(domain: "SkillService", code: 404, userInfo: [NSLocalizedDescriptionKey: "SourceMissing"])
+            }
+            
+            // Get modification date (directory or SKILL.md if exists for better precision?)
+            // User just wants "last modification date/time". Directory mod time changes when content changes usually.
+            // Let's check SKILL.md or the dir itself.
+            let skillMdPath = (originalSource as NSString).appendingPathComponent("SKILL.md")
+            let pathToStat = FileManager.default.fileExists(atPath: skillMdPath) ? skillMdPath : originalSource
+            
+            if let attr = try? FileManager.default.attributesOfItem(atPath: pathToStat),
+               let date = attr[.modificationDate] as? Date {
+                return (false, date)
+            }
+            
+            return (false, Date())
+        }
+    }
+
     func checkForUpdates(skill: InstalledSkill, agentName: String) async throws -> Bool {
         var registry = getRegistry()
         guard let entry = registry[skill.name] else { return false }
         
-        let forkPath = (forksDir as NSString).appendingPathComponent(entry.relativeForkPath)
-        var updateAvailable = false
-        
-        if entry.relativeForkPath.hasPrefix("repos/") {
-            // Git Repo: git fetch and check status
-            // git fetch origin
-            _ = try await runShellCommand(command: "git", args: ["-C", forkPath, "fetch"])
-            
-            // Check if behind
-            // git rev-list HEAD...origin/main --count
-            // We need to know the default branch. 
-            // git symbolic-ref refs/remotes/origin/HEAD
-            
-            let status = try await runShellCommand(command: "git", args: ["-C", forkPath, "status", "-uno"])
-            if status.contains("Your branch is behind") {
-                updateAvailable = true
-            }
-        } else {
-            // Local folder: Check modified date of original source vs fork
-            if FileManager.default.fileExists(atPath: entry.originalSource) {
-                let originalAttr = try FileManager.default.attributesOfItem(atPath: entry.originalSource)
-                let forkAttr = try FileManager.default.attributesOfItem(atPath: forkPath)
-                
-                if let orgDate = originalAttr[.modificationDate] as? Date,
-                   let forkDate = forkAttr[.modificationDate] as? Date {
-                    // If original is newer than our copy
-                    if orgDate > forkDate {
-                        updateAvailable = true
-                    }
-                }
-            }
-        }
+        // This is single skill check, but logic is same
+        let (updateAvailable, date) = try await checkSourceStatus(originalSource: entry.originalSource, relativeForkPath: entry.relativeForkPath)
         
         // Update registry
-        registry[skill.name]?.lastChecked = Date()
+        registry[skill.name]?.lastChecked = date
         registry[skill.name]?.updateAvailable = updateAvailable
         saveRegistry(registry)
         
@@ -459,23 +603,23 @@ class SkillService: ObservableObject {
              return
         }
         
-        let forkPath = (forksDir as NSString).appendingPathComponent(entry.relativeForkPath)
+        // Check if local source is missing?
+        // If git, pull. If local, do nothing (we use it directly) but verify existence.
         
-        // 1. Update the code in ~/.forks
+        let forkPath = getForkPath(source: entry.originalSource)
+        
+        // 1. Update the code
         if entry.relativeForkPath.hasPrefix("repos/") {
             try await runShellCommand(command: "git", args: ["-C", forkPath, "pull"])
         } else {
-            // Re-copy local folder
-            if FileManager.default.fileExists(atPath: entry.originalSource) {
-                if FileManager.default.fileExists(atPath: forkPath) {
-                    try FileManager.default.removeItem(atPath: forkPath)
-                }
-                try FileManager.default.copyItem(atPath: entry.originalSource, toPath: forkPath)
-            }
+            // Local: verify existence
+             if !FileManager.default.fileExists(atPath: forkPath) {
+                 throw NSError(domain: "SkillService", code: 404, userInfo: [NSLocalizedDescriptionKey: "Local source missing"])
+             }
+             // No copy needed
         }
         
-        // 2. Re-install/Update using the updated fork (forcing overwrite usually handled by agent tool logic, assuming add-skill handles it)
-        // 2. Re-install/Update using the updated fork
+        // 2. Re-install/Update
         try uninstallSkill(skillName: skillName, agentName: agentName)
         
         // Get agent cli name
@@ -492,52 +636,96 @@ class SkillService: ObservableObject {
     
     // MARK: - Background Update
     
-    private var updateCheckTask: Task<Void, Never>?
+    // Moved to RegistryView, but keeping helper if needed or clean up later.
+    // Assuming UI calls refreshRegistry directly now.
     
-    func startPeriodicUpdateChecks() {
-        updateCheckTask?.cancel()
-        updateCheckTask = Task {
-            try? await Task.sleep(nanoseconds: 5 * 60 * 1_000_000_000) // 5 min delay
-            guard !Task.isCancelled else { return }
-            
-            let registry = getRegistry()
-            let skillNames = Array(registry.keys)
-            
-            for name in skillNames {
-                guard !Task.isCancelled else { return }
-                guard let entry = registry[name] else { continue }
-                
-                // Throttle: 1 hour
-                if let last = entry.lastChecked, Date().timeIntervalSince(last) < 3600 {
-                    continue
-                }
-                
-                // We need dummy skill/agent objects to call checkForUpdates, or refactor it.
-                // Refactoring checkForUpdates to take just name is better, but it relies on finding the path currently?
-                // Actually my new checkForUpdates uses registry info mostly, but signature takes InstalledSkill.
-                // Let's overload it or construct a dummy.
-                
-                let dummySkill = InstalledSkill(name: name, description: nil, agents: [], source: entry.originalSource)
-                // agentName is unused in the new logic except for signature compatibility?
-                // Wait, old logic needed agent to find path. New logic uses registry.
-                // So agentName is ignored!
-                
-                do {
-                    let hasUpdate = try await checkForUpdates(skill: dummySkill, agentName: "")
-                    if hasUpdate {
-                        await MainActor.run { getInstalledSkills() }
-                    }
-                } catch {
-                    print("BG Update check failed for \(name): \(error)")
-                }
-                
-                try? await Task.sleep(nanoseconds: 2 * 1_000_000_000)
+    func refreshRegistry() async {
+        print("INFO: Refreshing registry...")
+        var registry = getRegistry()
+        var trackedSources = getTrackedSources()
+        var sourcesToRemove: Set<String> = []
+        
+        // Group skills by source to minimize checks
+        var skillsBySource: [String: [String]] = [:]
+        for (name, entry) in registry {
+            skillsBySource[entry.originalSource, default: []].append(name)
+        }
+        
+        // Also include tracked sources that have no skills yet
+        for source in trackedSources {
+            if skillsBySource[source] == nil {
+                skillsBySource[source] = []
             }
         }
-    }
-    
-    func stopPeriodicUpdateChecks() {
-        updateCheckTask?.cancel()
+        
+        for (source, skillNames) in skillsBySource {
+            // Get relative path if skill exists, otherwise look in tracked sources logic (might be new/empty)
+            // If it's in trackedSources but not registry, we don't have relativeForkPath stored.
+            // But we can deduce it.
+            // Actually, registry items hold data. Tracked sources just holds the string.
+            
+            // If we have skills, use one entry. If not, determine typ.
+            var relativePath = "unknown"
+            if let firstName = skillNames.first, let entry = registry[firstName] {
+                relativePath = entry.relativeForkPath
+            } else {
+                // Determine for empty source
+                 if source.contains("://") || source.hasPrefix("git@") {
+                     relativePath = "repos/..." // Doesnt matter for checkSourceStatus if we use getForkPath logic correctly?
+                     // checkSourceStatus uses relativePath prefix to determine git vs local.
+                     relativePath = "repos/placeholder"
+                 } else {
+                     relativePath = ""
+                 }
+            }
+            
+            print("INFO: Checking update for source: \(source)")
+            
+            do {
+                let (updateAvailable, lastCheckedDate) = try await checkSourceStatus(originalSource: source, relativeForkPath: relativePath)
+                
+                if updateAvailable {
+                    print("INFO: Update available for source: \(source)")
+                }
+                
+                // Bulk update entries
+                for name in skillNames {
+                    if var entry = registry[name] {
+                        entry.updateAvailable = updateAvailable
+                        entry.lastChecked = lastCheckedDate
+                        registry[name] = entry
+                    }
+                }
+            } catch {
+                let nsError = error as NSError
+                if nsError.userInfo[NSLocalizedDescriptionKey] as? String == "SourceMissing" {
+                    print("WARNING: Local source missing: \(source). Removing from registry.")
+                    sourcesToRemove.insert(source)
+                } else {
+                    print("Error checking source \(source): \(error)")
+                }
+            }
+        }
+        
+        // Remove missing sources
+        for source in sourcesToRemove {
+            // Remove skills
+            let skillsToRemove = registry.filter { $0.value.originalSource == source }.map { $0.key }
+            for skill in skillsToRemove {
+                registry.removeValue(forKey: skill)
+            }
+            trackedSources.remove(source)
+        }
+        
+        // Save
+        saveRegistry(registry)
+        saveTrackedSources(trackedSources)
+        
+        await MainActor.run {
+            getInstalledSkills()
+            self.registrySources = getRegistrySources()
+        }
+        print("INFO: Registry refresh complete")
     }
 
     // Keep helpers
