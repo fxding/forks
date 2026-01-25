@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum NavigationItem: Hashable, CaseIterable, Identifiable {
-    // "move installed skill up" -> Swap order
+    case dashboard
     case skills
     case projects
     case agents
@@ -11,6 +11,7 @@ enum NavigationItem: Hashable, CaseIterable, Identifiable {
     
     var descriptor: (title: String, icon: String) {
         switch self {
+        case .dashboard: return ("Dashboard", "square.grid.2x2.fill")
         case .agents: return ("Agents", "cpu")
         case .skills: return ("Skills", "sparkles.rectangle.stack")
         case .projects: return ("Projects", "folder.badge.gearshape")
@@ -20,7 +21,7 @@ enum NavigationItem: Hashable, CaseIterable, Identifiable {
 }
 
 struct ContentView: View {
-    @State private var selection: NavigationItem? = .skills
+    @State private var selection: NavigationItem? = .dashboard
     @StateObject private var skillService = SkillService() // Default to skills if moved up? User didn't specify default, but naturally top item is default.
     @StateObject private var projectService = ProjectService()
     
@@ -37,20 +38,23 @@ struct ContentView: View {
             .navigationTitle("Skill Man")
             .listStyle(.sidebar)
         } detail: {
-            // We wrap detail in ZStack or Group to attach global toolbar
-            Group {
-                switch selection {
-                case .skills, nil:
-                    InstalledSkillsView(skillService: skillService)
-                case .projects:
-                    ProjectListView(projectService: projectService, skillService: skillService)
-                case .agents:
-                    AppsView()
-                case .registry:
-                    RegistryView(skillService: skillService)
+            NavigationStack {
+                Group {
+                    switch selection {
+                    case .dashboard:
+                        DashboardView(selection: $selection, skillService: skillService, projectService: projectService)
+                    case .skills, nil:
+                        InstalledSkillsView(skillService: skillService)
+                    case .projects:
+                        ProjectListView(projectService: projectService, skillService: skillService)
+                    case .agents:
+                        AppsView()
+                    case .registry:
+                        RegistryView(skillService: skillService)
+                    }
                 }
+                .frame(minWidth: 900, minHeight: 600)
             }
-        .frame(minWidth: 900, minHeight: 600)
         }
         .onAppear {
             // Global app checks if any?

@@ -33,169 +33,167 @@ struct InstalledSkillsView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                // Agent Filter Bar
-                if !agentSkillCounts.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            FilterChip(
-                                title: "All",
-                                count: skillService.installedSkills.count,
-                                isSelected: selectedAgentFilter == nil,
-                                action: { selectedAgentFilter = nil }
-                            )
-                            
-                            ForEach(agentSkillCounts, id: \.agent.name) { item in
-                                FilterChip(
-                                    title: item.agent.name,
-                                    count: item.count,
-                                    isSelected: selectedAgentFilter == item.agent.name,
-                                    action: {
-                                        if selectedAgentFilter == item.agent.name {
-                                            selectedAgentFilter = nil
-                                        } else {
-                                            selectedAgentFilter = item.agent.name
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                        .padding(.horizontal)
-                        .padding(.vertical, 10)
-                    }
-                    .background(Color(nsColor: .controlBackgroundColor))
-                    .overlay(Divider(), alignment: .bottom)
-                }
-                
-                List {
-                    if filteredSkills.isEmpty {
-                        ContentUnavailableView(
-                            searchText.isEmpty ? "No Skills Installed" : "No Matches",
-                            systemImage: searchText.isEmpty ? "star.slash" : "magnifyingglass",
-                            description: Text(searchText.isEmpty ? "Install skills using the + button." : "Try a different search term or filter.")
+        VStack(spacing: 0) {
+            // Agent Filter Bar
+            if !agentSkillCounts.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        FilterChip(
+                            title: "All",
+                            count: skillService.installedSkills.count,
+                            isSelected: selectedAgentFilter == nil,
+                            action: { selectedAgentFilter = nil }
                         )
-                    } else {
-                        ForEach(filteredSkills) { skill in
-                            NavigationLink(destination: SkillDetailView(skillName: skill.name, skillService: skillService, agentService: agentService)) {
-                                SkillRow(
-                                    skill: skill,
-                                    isExpanded: false, 
-                                    detectedAgents: [], 
-                                    onToggle: {},
-                                    onInstallTo: { _ in },
-                                    onUninstallFrom: { _ in }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-            .navigationTitle("Skills")
-            .searchable(text: $searchText, placement: .toolbar)
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button(action: { showAddSkillDialog = true }) {
-                        Label("Add Skill", systemImage: "plus")
-                    }
-                    .help("Install new skill")
-                }
-            }
-            .sheet(isPresented: $showAddSkillDialog) {
-                VStack(spacing: 24) {
-                    Text("Add Skill Source")
-                        .font(.headline)
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Enter a repository URL or select a local folder to add new capabilities to your agents.")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
                         
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Examples:")
-                                .font(.caption)
-                                .fontWeight(.medium)
-                            
-                            HStack(spacing: 4) {
-                                Image(systemName: "globe")
-                                    .font(.caption)
-                                Text("vercel-labs/agent-skills")
-                                    .font(.caption)
-                                    .monospaced()
-                            }
-                            .foregroundColor(.secondary)
-                            
-                            HStack(spacing: 4) {
-                                Image(systemName: "folder")
-                                    .font(.caption)
-                                Text("/Users/username/my-skills")
-                                    .font(.caption)
-                                    .monospaced()
-                            }
-                            .foregroundColor(.secondary)
+                        ForEach(agentSkillCounts, id: \.agent.name) { item in
+                            FilterChip(
+                                title: item.agent.name,
+                                count: item.count,
+                                isSelected: selectedAgentFilter == item.agent.name,
+                                action: {
+                                    if selectedAgentFilter == item.agent.name {
+                                        selectedAgentFilter = nil
+                                    } else {
+                                        selectedAgentFilter = item.agent.name
+                                    }
+                                }
+                            )
                         }
-                        .padding(.vertical, 4)
                     }
+                    .padding(.horizontal)
+                    .padding(.vertical, 10)
+                }
+                .background(Color(nsColor: .controlBackgroundColor))
+                .overlay(Divider(), alignment: .bottom)
+            }
+            
+            List {
+                if filteredSkills.isEmpty {
+                    ContentUnavailableView(
+                        searchText.isEmpty ? "No Skills Installed" : "No Matches",
+                        systemImage: searchText.isEmpty ? "star.slash" : "magnifyingglass",
+                        description: Text(searchText.isEmpty ? "Install skills using the + button." : "Try a different search term or filter.")
+                    )
+                } else {
+                    ForEach(filteredSkills) { skill in
+                        NavigationLink(destination: SkillDetailView(skillName: skill.name, skillService: skillService, agentService: agentService)) {
+                            SkillRow(
+                                skill: skill,
+                                isExpanded: false, 
+                                detectedAgents: [], 
+                                onToggle: {},
+                                onInstallTo: { _ in },
+                                onUninstallFrom: { _ in }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle("Skills")
+        .searchable(text: $searchText, placement: .toolbar)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button(action: { showAddSkillDialog = true }) {
+                    Label("Add Skill", systemImage: "plus")
+                }
+                .help("Install new skill")
+            }
+        }
+        .sheet(isPresented: $showAddSkillDialog) {
+            VStack(spacing: 24) {
+                Text("Add Skill Source")
+                    .font(.headline)
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Enter a repository URL or select a local folder to add new capabilities to your agents.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                     
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Repository URL or Local Path")
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Examples:")
                             .font(.caption)
                             .fontWeight(.medium)
                         
-                        HStack {
-                            TextField("user/repo or /path/to/skills", text: $newRepoUrl)
-                                .textFieldStyle(.roundedBorder)
-                            
-                            Button {
-                                let openPanel = NSOpenPanel()
-                                openPanel.canChooseFiles = false
-                                openPanel.canChooseDirectories = true
-                                openPanel.allowsMultipleSelection = false
-                                openPanel.begin { response in
-                                    if response == .OK, let url = openPanel.url {
-                                        newRepoUrl = url.path
-                                    }
-                                }
-                            } label: {
-                                Image(systemName: "folder")
-                            }
+                        HStack(spacing: 4) {
+                            Image(systemName: "globe")
+                                .font(.caption)
+                            Text("vercel-labs/agent-skills")
+                                .font(.caption)
+                                .monospaced()
                         }
+                        .foregroundColor(.secondary)
+                        
+                        HStack(spacing: 4) {
+                            Image(systemName: "folder")
+                                .font(.caption)
+                            Text("/Users/username/my-skills")
+                                .font(.caption)
+                                .monospaced()
+                        }
+                        .foregroundColor(.secondary)
                     }
+                    .padding(.vertical, 4)
+                }
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Repository URL or Local Path")
+                        .font(.caption)
+                        .fontWeight(.medium)
                     
                     HStack {
-                        Button("Cancel") {
-                            showAddSkillDialog = false
-                        }
-                        .keyboardShortcut(.cancelAction)
+                        TextField("user/repo or /path/to/skills", text: $newRepoUrl)
+                            .textFieldStyle(.roundedBorder)
                         
-                        Button("Browse Skills") {
-                            showAddSkillDialog = false
-                            navigateToStore = true
-                        }
-                        .keyboardShortcut(.defaultAction)
-                        .disabled(newRepoUrl.isEmpty)
-                    }
-                    .padding(.top, 8)
-                }
-                .padding(24)
-                .frame(width: 450)
-            }
-            .sheet(isPresented: $navigateToStore) {
-                NavigationStack {
-                    AvailableSkillsView(repoUrl: newRepoUrl)
-                        .toolbar {
-                            ToolbarItem(placement: .cancellationAction) {
-                                Button("Close") { navigateToStore = false }
+                        Button {
+                            let openPanel = NSOpenPanel()
+                            openPanel.canChooseFiles = false
+                            openPanel.canChooseDirectories = true
+                            openPanel.allowsMultipleSelection = false
+                            openPanel.begin { response in
+                                if response == .OK, let url = openPanel.url {
+                                    newRepoUrl = url.path
+                                }
                             }
+                        } label: {
+                            Image(systemName: "folder")
                         }
+                    }
                 }
-                .frame(minWidth: 600, minHeight: 400)
+                
+                HStack {
+                    Button("Cancel") {
+                        showAddSkillDialog = false
+                    }
+                    .keyboardShortcut(.cancelAction)
+                    
+                    Button("Browse Skills") {
+                        showAddSkillDialog = false
+                        navigateToStore = true
+                    }
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(newRepoUrl.isEmpty)
+                }
+                .padding(.top, 8)
             }
-            .onAppear {
-                skillService.getInstalledSkills()
-                agentService.refreshAgents()
+            .padding(24)
+            .frame(width: 450)
+        }
+        .sheet(isPresented: $navigateToStore) {
+            NavigationStack {
+                AvailableSkillsView(repoUrl: newRepoUrl)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { navigateToStore = false }
+                        }
+                    }
             }
+            .frame(minWidth: 600, minHeight: 400)
+        }
+        .onAppear {
+            skillService.getInstalledSkills()
+            agentService.refreshAgents()
         }
     }
 }
