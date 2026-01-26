@@ -67,8 +67,13 @@ class SkillService: ObservableObject {
         self.registrySources = getRegistrySources()
     }
     
-    func fetchSkills(source: String = "vercel-labs/agent-skills") async throws {
-        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("skill-man-clones")
+    func fetchSkills(source: String) async throws {
+        // Validate source is not empty
+        guard !source.trimmingCharacters(in: .whitespaces).isEmpty else {
+            throw NSError(domain: "SkillService", code: 400, userInfo: [NSLocalizedDescriptionKey: "Source cannot be empty"])
+        }
+        
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("forks-clones")
         try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
         
         let id = UUID().uuidString
@@ -532,7 +537,11 @@ class SkillService: ObservableObject {
 
     // MARK: - Installation
     
-    func installSkills(source: String = "vercel-labs/agent-skills", skillNames: [String], agentCliNames: [String], global: Bool = true) async throws -> String {
+    func installSkills(source: String, skillNames: [String], agentCliNames: [String], global: Bool = true) async throws -> String {
+        // Validate source is not empty
+        guard !source.trimmingCharacters(in: .whitespaces).isEmpty else {
+            throw NSError(domain: "SkillService", code: 400, userInfo: [NSLocalizedDescriptionKey: "Source cannot be empty"])
+        }
         // 1. Prepare ~/.forks
         try FileManager.default.createDirectory(atPath: forksDir, withIntermediateDirectories: true)
         
@@ -604,7 +613,11 @@ class SkillService: ObservableObject {
     
     // MARK: - Project Installation
     
-    func installSkillsToProject(source: String = "vercel-labs/agent-skills", skillNames: [String], agentCliNames: [String], projectPath: String) async throws -> String {
+    func installSkillsToProject(source: String, skillNames: [String], agentCliNames: [String], projectPath: String) async throws -> String {
+        // Validate source is not empty
+        guard !source.trimmingCharacters(in: .whitespaces).isEmpty else {
+            throw NSError(domain: "SkillService", code: 400, userInfo: [NSLocalizedDescriptionKey: "Source cannot be empty"])
+        }
         // 1. Prepare ~/.forks
         try FileManager.default.createDirectory(atPath: forksDir, withIntermediateDirectories: true)
         

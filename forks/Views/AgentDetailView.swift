@@ -155,10 +155,14 @@ struct AgentDetailView: View {
         Task {
             for skill in agentSkills {
                 do {
+                    guard let source = skill.source else {
+                        print("Skipping \(skill.name): no source available")
+                        continue
+                    }
                     let agentObj = AgentService().agents.first { $0.name == agentName }
                     if let agentCli = agentObj?.cliName {
                         _ = try await skillService.installSkills(
-                            source: skill.source ?? "vercel-labs/agent-skills",
+                            source: source,
                             skillNames: [skill.name],
                             agentCliNames: [agentCli],
                             global: true

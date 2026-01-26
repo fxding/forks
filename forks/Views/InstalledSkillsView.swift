@@ -9,7 +9,7 @@ struct InstalledSkillsView: View {
     
     // Add Skill State
     @State private var showAddSkillDialog = false
-    @State private var newRepoUrl: String = "vercel-labs/agent-skills"
+    @State private var newRepoUrl: String = ""
     @State private var navigateToStore = false
     
     var filteredSkills: [InstalledSkill] {
@@ -121,7 +121,7 @@ struct InstalledSkillsView: View {
                         HStack(spacing: 4) {
                             Image(systemName: "globe")
                                 .font(.caption)
-                            Text("vercel-labs/agent-skills")
+                            Text("user/repo,https://github.com/user/repo")
                                 .font(.caption)
                                 .monospaced()
                         }

@@ -251,7 +251,11 @@ struct SkillDetailView: View {
         processingAgent = name
         Task {
             do {
-                let source = skill?.source ?? "vercel-labs/agent-skills"
+                guard let source = skill?.source else {
+                    print("Error: No source available for skill")
+                    processingAgent = nil
+                    return
+                }
                 _ = try await skillService.installSkills(
                     source: source,
                     skillNames: [skillName],

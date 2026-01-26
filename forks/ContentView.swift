@@ -35,7 +35,7 @@ struct ContentView: View {
                         .tag(item)
                 }
             }
-            .navigationTitle("Skill Man")
+            .navigationTitle("Forks")
             .listStyle(.sidebar)
         } detail: {
             NavigationStack {

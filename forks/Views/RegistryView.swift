@@ -244,7 +244,7 @@ struct AddSourceSheet: View {
                     HStack(spacing: 4) {
                         Image(systemName: "globe")
                             .font(.caption)
-                        Text("vercel-labs/agent-skills")
+                        Text("user/repo,https://github.com/user/repo")
                             .font(.caption)
                             .monospaced()
                     }
@@ -268,7 +268,7 @@ struct AddSourceSheet: View {
                     .fontWeight(.medium)
                 
                 HStack {
-                    TextField("user/repo or /path/to/skills", text: $sourceUrl)
+                    TextField("https://github.com/user/repo or /path/to/skills", text: $sourceUrl)
                         .textFieldStyle(.roundedBorder)
                     
                     Button {
