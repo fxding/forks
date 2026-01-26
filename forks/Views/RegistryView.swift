@@ -6,6 +6,7 @@ struct RegistryView: View {
     @State private var selectedSourceId: String?
     @State private var showAddSourceSheet = false
     @State private var isRefreshing = false
+    @State private var showDeleteSourceConfirm: String? = nil
 
     var body: some View {
         NavigationStack {
@@ -79,6 +80,17 @@ struct RegistryView: View {
                                     
                                     // Actions
                                     HStack(spacing: 0) {
+                                        // Delete button for all sources
+                                        Button {
+                                            showDeleteSourceConfirm = source.id
+                                        } label: {
+                                            Image(systemName: "trash.circle")
+                                                .foregroundColor(.red)
+                                        }
+                                        .buttonStyle(.borderless)
+                                        .help("Delete from App")
+                                        .padding(.leading, 8)
+                                        
                                         Button {
                                             if source.type == "Local" {
                                                 NSWorkspace.shared.open(URL(fileURLWithPath: source.path))
@@ -98,9 +110,9 @@ struct RegistryView: View {
                             }
                             .contextMenu {
                                 Button(role: .destructive) {
-                                    skillService.removeRegistrySource(source: source.id)
+                                    showDeleteSourceConfirm = source.id
                                 } label: {
-                                    Label("Remove Source", systemImage: "trash")
+                                    Label("Delete from App", systemImage: "trash")
                                 }
                                 
                                 Button {
@@ -158,6 +170,25 @@ struct RegistryView: View {
             .navigationDestination(for: SkillService.RegistrySource.self) { source in
                 RegistrySourceDetailView(source: source, skillService: skillService)
             }
+            .confirmationDialog("Delete from App?", isPresented: .init(
+                get: { showDeleteSourceConfirm != nil },
+                set: { if !$0 { showDeleteSourceConfirm = nil } }
+            ), presenting: showDeleteSourceConfirm) { sourceId in
+                Button("Delete", role: .destructive) {
+                    deleteSource(sourceId: sourceId)
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: { sourceId in
+                if let source = skillService.registrySources.first(where: { $0.id == sourceId }) {
+                    if source.type == "Local" {
+                        Text("This will remove this local source from the app. The folder on disk will not be deleted.")
+                    } else {
+                        Text("This will delete this repository from the app.")
+                    }
+                } else {
+                    Text("This will delete this source from the app.")
+                }
+            }
         }
     }
     
@@ -173,6 +204,15 @@ struct RegistryView: View {
         }
         if let url = URL(string: urlStr) {
             NSWorkspace.shared.open(url)
+        }
+    }
+    
+    private func deleteSource(sourceId: String) {
+        do {
+            try skillService.deleteSource(source: sourceId)
+        } catch {
+            print("Error deleting source: \(error)")
+            // TODO: Show error alert to user
         }
     }
 }

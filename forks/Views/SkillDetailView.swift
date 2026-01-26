@@ -62,16 +62,25 @@ struct SkillDetailView: View {
                         
                         // Source information
                         if let source = skill.source {
+                            let isLocal = source.hasPrefix("/")
                             HStack(spacing: 4) {
-                                Image(systemName: source.hasPrefix("/") ? "folder" : "globe")
+                                Image(systemName: isLocal ? "folder" : "globe")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                 Text(source)
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                     .lineLimit(1)
+                                if isLocal {
+                                    Text("(Local)")
+                                        .font(.caption2)
+                                        .foregroundColor(.orange)
+                                }
                             }
                             .padding(.top, 4)
+                            .onAppear {
+                                print("DEBUG: Skill '\(skill.name)' source: '\(source)', isLocal: \(isLocal)")
+                            }
                         }
                         
                         // Update status

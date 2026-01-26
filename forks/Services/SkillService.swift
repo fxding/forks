@@ -415,6 +415,57 @@ class SkillService: ObservableObject {
         self.registrySources = getRegistrySources()
     }
     
+    // MARK: - Delete Operations
+    
+    /// Delete a source from the app
+    /// - For local sources: Removes from registry only (keeps folder on disk)
+    /// - For remote repos: Deletes the cloned repo from ~/.forks/repos/
+    func deleteSource(source: String) throws {
+        let isLocal = FileManager.default.fileExists(atPath: source) && source.hasPrefix("/")
+        
+        if isLocal {
+            // Local source: Remove from registry only, don't touch the folder
+            var tracked = getTrackedSources()
+            tracked.remove(source)
+            saveTrackedSources(tracked)
+            
+            // Remove all skills from this source from registry
+            var registry = getRegistry()
+            let skillsToRemove = registry.filter { $0.value.originalSource == source }.map { $0.key }
+            for skillName in skillsToRemove {
+                registry.removeValue(forKey: skillName)
+            }
+            saveRegistry(registry)
+        } else {
+            // Remote repo: Delete from disk
+            let forkPath = getForkPath(source: source)
+            
+            // Check if the path exists
+            guard FileManager.default.fileExists(atPath: forkPath) else {
+                throw NSError(domain: "SkillService", code: 404, userInfo: [NSLocalizedDescriptionKey: "Repository clone not found on disk"])
+            }
+            
+            // Delete the directory
+            try FileManager.default.removeItem(atPath: forkPath)
+            
+            // Remove from tracked sources
+            var tracked = getTrackedSources()
+            tracked.remove(source)
+            saveTrackedSources(tracked)
+            
+            // Remove all skills from this source from registry
+            var registry = getRegistry()
+            let skillsToRemove = registry.filter { $0.value.originalSource == source }.map { $0.key }
+            for skillName in skillsToRemove {
+                registry.removeValue(forKey: skillName)
+            }
+            saveRegistry(registry)
+        }
+        
+        // Refresh UI
+        getInstalledSkills()
+    }
+    
     private func getTrackedSources() -> Set<String> {
         guard FileManager.default.fileExists(atPath: sourcesRegistryPath),
               let data = try? Data(contentsOf: URL(fileURLWithPath: sourcesRegistryPath)),
