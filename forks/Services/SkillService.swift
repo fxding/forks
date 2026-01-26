@@ -241,7 +241,7 @@ class SkillService: ObservableObject {
         return nil
     }
     
-    private func runShellCommand(command: String, args: [String], environment: [String: String]? = nil) async throws -> String {
+    private func runShellCommand(command: String, args: [String], environment: [String: String]? = nil, currentDirectory: String? = nil) async throws -> String {
         return try await withCheckedThrowingContinuation { continuation in
             let task = Process()
             
@@ -265,6 +265,10 @@ class SkillService: ObservableObject {
             
             if let environment = environment {
                 task.environment = environment
+            }
+            
+            if let currentDirectory = currentDirectory {
+                task.currentDirectoryURL = URL(fileURLWithPath: currentDirectory)
             }
             
             let pipe = Pipe()
@@ -594,7 +598,8 @@ class SkillService: ObservableObject {
         }
         saveRegistry(registry)
         
-        // 4. Install to project path (not global)
+        // 4. Install to project path (run from project directory, not global)
+        // add-skill installs to project-level by default when run from a directory
         var args = ["add-skill", forkPath]
         for skill in skillNames {
             args.append("--skill")
@@ -604,12 +609,10 @@ class SkillService: ObservableObject {
             args.append("--agent")
             args.append(agent)
         }
-        // Use project path instead of global
-        args.append("--project")
-        args.append(projectPath)
+        // Don't use --global, run from project directory instead
         args.append("--yes")
         
-        let output = try await runShellCommand(command: "npx", args: args, environment: ["PATH": "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"])
+        let output = try await runShellCommand(command: "npx", args: args, environment: ["PATH": "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"], currentDirectory: projectPath)
         
         return output
     }
