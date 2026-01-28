@@ -628,7 +628,7 @@ class SkillService: ObservableObject {
         saveRegistry(registry)
         
         // 4. Install from the Fork/Local Path
-        var args = ["add-skill", forkPath]
+        var args = ["skills", "add", forkPath]
         for skill in skillNames {
             args.append("--skill")
             args.append(skill)
@@ -710,9 +710,9 @@ class SkillService: ObservableObject {
         saveRegistry(registry)
         
         // 4. Install to project path (run from project directory, not global)
-        // add-skill installs to project-level by default when run from a directory
+        // skills add installs to project-level by default when run from a directory
         print("[DEBUG] Installing skill to project path: \(projectPath)")
-        var args = ["add-skill", forkPath]
+        var args = ["skills", "add", forkPath]
         for skill in skillNames {
             args.append("--skill")
             args.append(skill)
