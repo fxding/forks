@@ -196,18 +196,21 @@ struct AddSkillToProjectSheet: View {
         let source = registrySource.path
         
         Task {
+            print("[DEBUG] AddSkillToProjectSheet: Install triggered for \(selectedSkillNames) from \(source)")
             do {
                 // Install to project path (not global)
-                _ = try await skillService.installSkillsToProject(
+                let output = try await skillService.installSkillsToProject(
                     source: source,
                     skillNames: Array(selectedSkillNames),
                     agentCliNames: Array(selectedAgents),
                     projectPath: project.path
                 )
+                print("[DEBUG] AddSkillToProjectSheet: Install success. Output: \(output)")
                 
                 onSuccess?()
                 dismiss()
             } catch {
+                print("[DEBUG] AddSkillToProjectSheet: Install failed with error: \(error)")
                 errorMessage = error.localizedDescription
             }
             isInstalling = false

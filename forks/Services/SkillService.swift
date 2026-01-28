@@ -247,54 +247,94 @@ class SkillService: ObservableObject {
     }
     
     private func runShellCommand(command: String, args: [String], environment: [String: String]? = nil, currentDirectory: String? = nil) async throws -> String {
+        print("[DEBUG] runShellCommand started: \(command) \(args.joined(separator: " "))")
+        if let cwd = currentDirectory {
+            print("[DEBUG] CWD: \(cwd)")
+        }
+        
         return try await withCheckedThrowingContinuation { continuation in
-            let task = Process()
-            
-            // Resolve executable path
-            // We use /usr/bin/env to find the command or manual search
-            // For now, let's try assuming standard paths
-            var launchPath = "/usr/bin/" + command
-            if !FileManager.default.fileExists(atPath: launchPath) {
-                launchPath = "/usr/local/bin/" + command
-            }
-             if !FileManager.default.fileExists(atPath: launchPath) {
-                launchPath = "/opt/homebrew/bin/" + command
-            }
-            // Fallback for git/npx
-            if command == "npx" && !FileManager.default.fileExists(atPath: launchPath) {
-                 // Try looking into path
-            }
-
-            task.executableURL = URL(fileURLWithPath: launchPath)
-            task.arguments = args
-            
-            if let environment = environment {
-                task.environment = environment
-            }
-            
-            if let currentDirectory = currentDirectory {
-                task.currentDirectoryURL = URL(fileURLWithPath: currentDirectory)
-            }
-            
-            let pipe = Pipe()
-            task.standardOutput = pipe
-            task.standardError = pipe
-            
-            do {
-                try task.run()
+            DispatchQueue.global(qos: .userInitiated).async {
+                let task = Process()
                 
-                let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                task.waitUntilExit()
-                
-                 let output = String(data: data, encoding: .utf8) ?? ""
-                
-                if task.terminationStatus == 0 {
-                    continuation.resume(returning: output)
-                } else {
-                    continuation.resume(throwing: NSError(domain: "Shell", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: output]))
+                // Resolve executable path
+                var launchPath = "/usr/bin/" + command
+                if !FileManager.default.fileExists(atPath: launchPath) {
+                    launchPath = "/usr/local/bin/" + command
                 }
-            } catch {
-                continuation.resume(throwing: error)
+                 if !FileManager.default.fileExists(atPath: launchPath) {
+                    launchPath = "/opt/homebrew/bin/" + command
+                }
+                // Fallback for git/npx
+                if command == "npx" && !FileManager.default.fileExists(atPath: launchPath) {
+                     // Try looking into path
+                }
+
+                task.executableURL = URL(fileURLWithPath: launchPath)
+                task.arguments = args
+                
+                // Prepare environment with non-interactive flags
+                var finalEnv = environment ?? ProcessInfo.processInfo.environment
+                finalEnv["npm_config_yes"] = "true"
+                finalEnv["CI"] = "true"
+                task.environment = finalEnv
+                
+                if let currentDirectory = currentDirectory {
+                    task.currentDirectoryURL = URL(fileURLWithPath: currentDirectory)
+                }
+                
+                let outPipe = Pipe()
+                task.standardOutput = outPipe
+                task.standardError = outPipe
+                
+                // Add stdin pipe to close it immediately to prevent interactive hangs
+                let inPipe = Pipe()
+                task.standardInput = inPipe
+                
+                var accumulatedData = Data()
+                let group = DispatchGroup()
+                group.enter()
+                
+                outPipe.fileHandleForReading.readabilityHandler = { handle in
+                    let data = handle.availableData
+                    if data.isEmpty {
+                        // EOF
+                        outPipe.fileHandleForReading.readabilityHandler = nil
+                        group.leave()
+                    } else {
+                        accumulatedData.append(data)
+                         if let str = String(data: data, encoding: .utf8) {
+                            print("[DEBUG-STREAM] \(str.trimmingCharacters(in: .whitespacesAndNewlines))")
+                        }
+                    }
+                }
+                
+                do {
+                    print("[DEBUG] Launching process: \(launchPath)")
+                    try task.run()
+                    
+                    // Close stdin immediately to fail any interactive prompts
+                    try? inPipe.fileHandleForWriting.close()
+                    
+                    print("[DEBUG] Process running...")
+                    task.waitUntilExit()
+                    print("[DEBUG] Process exited with status: \(task.terminationStatus)")
+                    
+                    // Wait for all output to be read
+                    group.wait()
+                    
+                    let output = String(data: accumulatedData, encoding: .utf8) ?? ""
+                    
+                    if task.terminationStatus == 0 {
+                        print("[DEBUG] Command SUCCESS")
+                        continuation.resume(returning: output)
+                    } else {
+                        print("[DEBUG] Command FAILED: \(output)")
+                        continuation.resume(throwing: NSError(domain: "Shell", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: output]))
+                    }
+                } catch {
+                    print("[DEBUG] Process Launch Error: \(error)")
+                    continuation.resume(throwing: error)
+                }
             }
         }
     }
@@ -614,6 +654,8 @@ class SkillService: ObservableObject {
     // MARK: - Project Installation
     
     func installSkillsToProject(source: String, skillNames: [String], agentCliNames: [String], projectPath: String) async throws -> String {
+        print("[DEBUG] installSkillsToProject: source=\(source), skills=\(skillNames)")
+        
         // Validate source is not empty
         guard !source.trimmingCharacters(in: .whitespaces).isEmpty else {
             throw NSError(domain: "SkillService", code: 400, userInfo: [NSLocalizedDescriptionKey: "Source cannot be empty"])
@@ -627,19 +669,23 @@ class SkillService: ObservableObject {
         // 2. Clone or use local source
         if source.contains("://") || source.hasPrefix("git@") || !FileManager.default.fileExists(atPath: source) {
             // It's a remote repo
+            print("[DEBUG] Handling remote repo source")
             let safeSourceName = source.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
             relativePath = "repos/\(safeSourceName)"
             forkPath = (forksDir as NSString).appendingPathComponent(relativePath)
             
             if FileManager.default.fileExists(atPath: forkPath) {
                 // Update cache
+                print("[DEBUG] Updating existing repo at \(forkPath)")
                 try await runShellCommand(command: "git", args: ["-C", forkPath, "pull"])
             } else {
                 let url = (!source.contains("://") && !source.hasPrefix("git@")) ? "https://github.com/\(source).git" : source
+                print("[DEBUG] Cloning new repo from \(url) to \(forkPath)")
                 try await runShellCommand(command: "git", args: ["clone", url, forkPath])
             }
         } else {
             // It's a local folder: Use directly
+            print("[DEBUG] Handling local folder source")
             var isDir: ObjCBool = false
             guard FileManager.default.fileExists(atPath: source, isDirectory: &isDir), isDir.boolValue else {
                  throw NSError(domain: "SkillService", code: 404, userInfo: [NSLocalizedDescriptionKey: "Local source directory not found: \(source)"])
@@ -649,6 +695,7 @@ class SkillService: ObservableObject {
         }
         
         // 3. Update Registry
+        print("[DEBUG] Updating registry")
         var registry = getRegistry()
         let now = Date()
         for name in skillNames {
@@ -664,6 +711,7 @@ class SkillService: ObservableObject {
         
         // 4. Install to project path (run from project directory, not global)
         // add-skill installs to project-level by default when run from a directory
+        print("[DEBUG] Installing skill to project path: \(projectPath)")
         var args = ["add-skill", forkPath]
         for skill in skillNames {
             args.append("--skill")
@@ -676,7 +724,9 @@ class SkillService: ObservableObject {
         // Don't use --global, run from project directory instead
         args.append("--yes")
         
+        print("[DEBUG] Executing npx command")
         let output = try await runShellCommand(command: "npx", args: args, environment: ["PATH": "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"], currentDirectory: projectPath)
+        print("[DEBUG] Installation complete")
         
         return output
     }
