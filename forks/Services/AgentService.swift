@@ -12,13 +12,13 @@ class AgentService: ObservableObject {
         return Agent.supportedAgents.map { agent in
             var updatedAgent = agent
             let home = "/Users/\(NSUserName())"
-            let expandedPath = agent.globalPath.replacingOccurrences(of: "~", with: home)
+            let expandedPath = agent.configPath.replacingOccurrences(of: "~", with: home)
             
             var isDir: ObjCBool = false
             let exists = FileManager.default.fileExists(atPath: expandedPath, isDirectory: &isDir)
             if agent.name == "Cursor" || agent.name == "Antigravity" {
                 print("Checking agent: \(agent.name)")
-                print("Original path: \(agent.globalPath)")
+                print("Config path: \(agent.configPath)")
                 print("Expanded path: \(expandedPath)")
                 print("Exists: \(exists), IsDir: \(isDir.boolValue)")
             }
