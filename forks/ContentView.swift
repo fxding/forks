@@ -6,16 +6,18 @@ enum NavigationItem: Hashable, CaseIterable, Identifiable {
     case projects
     case agents
     case registry
+    case search
     
     var id: Self { self }
     
     var descriptor: (title: String, icon: String) {
         switch self {
         case .dashboard: return ("Dashboard", "square.grid.2x2.fill")
-        case .agents: return ("Agents", "cpu")
         case .skills: return ("Skills", "sparkles.rectangle.stack")
         case .projects: return ("Projects", "folder.badge.gearshape")
+        case .agents: return ("Agents", "cpu")
         case .registry: return ("Registry", "list.bullet.rectangle.portrait.fill")
+        case .search: return ("Search", "magnifyingglass")
         }
     }
 }
@@ -43,6 +45,8 @@ struct ContentView: View {
                     switch selection {
                     case .dashboard:
                         DashboardView(selection: $selection, skillService: skillService, projectService: projectService)
+                    case .search:
+                        SkillSearchView(skillService: skillService, projectService: projectService)
                     case .skills, nil:
                         InstalledSkillsView(skillService: skillService)
                     case .projects:

@@ -722,6 +722,8 @@ class SkillService: ObservableObject {
             args.append(agent)
         }
         // Don't use --global, run from project directory instead
+        args.append("--mode")
+        args.append("copy")
         args.append("--yes")
         
         print("[DEBUG] Executing npx command")

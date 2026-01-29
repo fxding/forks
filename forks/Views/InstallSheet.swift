@@ -24,10 +24,20 @@ struct InstallSheet: View {
         self.onSuccess = onSuccess
     }
     
+    @StateObject private var projectService = ProjectService()
+    
     @Environment(\.dismiss) var dismiss
     @State private var selectedAgents: Set<String> = []
     @State private var isInstalling = false
     @State private var installError: String?
+    @State private var installationMode: InstallationMode = .global
+    @State private var selectedProject: Project?
+    
+    enum InstallationMode: String, CaseIterable, Identifiable {
+        case global = "Global"
+        case project = "Project"
+        var id: String { rawValue }
+    }
     
     var body: some View {
         VStack(spacing: 20) {
@@ -40,36 +50,60 @@ struct InstallSheet: View {
                     .controlSize(.regular)
                     .padding()
             } else {
-                Text("Select agents to install this skill for:")
-                    .font(.subheadline)
-                
-                List {
-                ForEach(agentService.agents.filter { $0.detected }, id: \.name) { agent in
-                    HStack {
-                        Toggle(isOn: Binding(
-                            get: { selectedAgents.contains(agent.cliName) },
-                            set: { isSelected in
-                                if isSelected { selectedAgents.insert(agent.cliName) }
-                                else { selectedAgents.remove(agent.cliName) }
+                VStack(spacing: 20) {
+                    Picker("", selection: $installationMode) {
+                        ForEach(InstallationMode.allCases) { mode in
+                            Text(mode.rawValue).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .frame(width: 200) // Center and fixed width
+                    
+                    VStack(alignment: .leading) {
+                        if installationMode == .project {
+                            Picker("Select Project", selection: $selectedProject) {
+                                Text("Select a project...").tag(nil as Project?)
+                                ForEach(projectService.projects) { project in
+                                    Text(project.name).tag(project as Project?)
+                                }
                             }
-                        )) {
+                            .labelsHidden()
+                            .frame(maxWidth: .infinity)
+                            .padding(.bottom, 10)
+                        }
+                    
+                    Text("Select agents to install this skill for:")
+                        .font(.subheadline)
+                    
+                    List {
+                        ForEach(agentService.agents.filter { $0.detected }, id: \.name) { agent in
                             HStack {
-                                Image(systemName: "terminal")
-                                Text(agent.name)
+                                Toggle(isOn: Binding(
+                                    get: { selectedAgents.contains(agent.cliName) },
+                                    set: { isSelected in
+                                        if isSelected { selectedAgents.insert(agent.cliName) }
+                                        else { selectedAgents.remove(agent.cliName) }
+                                    }
+                                )) {
+                                    HStack {
+                                        Image(systemName: "terminal")
+                                        Text(agent.name)
+                                    }
+                                }
+                                .toggleStyle(.checkbox)
                             }
                         }
-                        .toggleStyle(.checkbox) 
+                        if agentService.agents.filter({ $0.detected }).isEmpty {
+                            Text("No agents detected locally.")
+                                .foregroundStyle(.secondary)
+                        }
                     }
-                }
-                if agentService.agents.filter({ $0.detected }).isEmpty {
-                    Text("No agents detected locally.")
-                        .foregroundStyle(.secondary)
+                    .listStyle(.bordered)
+                    .frame(height: 200)
                 }
             }
-
-                .listStyle(.bordered)
-                .frame(height: 200)
-            }
+        }
             
             if let error = installError {
                 Text(error)
@@ -86,7 +120,7 @@ struct InstallSheet: View {
                 Button("Install") {
                     install()
                 }
-                .disabled(selectedAgents.isEmpty || isInstalling)
+                .disabled(selectedAgents.isEmpty || isInstalling || (installationMode == .project && selectedProject == nil))
                 .keyboardShortcut(.defaultAction)
             }
             .padding()
@@ -103,12 +137,21 @@ struct InstallSheet: View {
         installError = nil
         Task {
             do {
-                _ = try await skillService.installSkills(
-                    source: source,
-                    skillNames: skillNames,
-                    agentCliNames: Array(selectedAgents),
-                    global: true
-                )
+                if installationMode == .global {
+                    _ = try await skillService.installSkills(
+                        source: source,
+                        skillNames: skillNames,
+                        agentCliNames: Array(selectedAgents),
+                        global: true
+                    )
+                } else if let project = selectedProject {
+                    _ = try await skillService.installSkillsToProject(
+                        source: source,
+                        skillNames: skillNames,
+                        agentCliNames: Array(selectedAgents),
+                        projectPath: project.path
+                    )
+                }
                 onSuccess?()
                 dismiss()
             } catch {
