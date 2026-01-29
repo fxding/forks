@@ -8,20 +8,6 @@ struct MarkdownPreviewView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header
-            HStack {
-                Text(URL(fileURLWithPath: filePath).pathExtension == "md" ? "SKILL.md" : URL(fileURLWithPath: filePath).lastPathComponent)
-                    .font(.headline)
-                Spacer()
-                Button("Done") {
-                    dismiss()
-                }
-            }
-            .padding()
-            .background(Color(nsColor: .controlBackgroundColor))
-            
-            Divider()
-            
             if let error = error {
                 VStack {
                     Image(systemName: "exclamationmark.triangle")
@@ -44,7 +30,7 @@ struct MarkdownPreviewView: View {
                 .background(Color(nsColor: .textBackgroundColor))
             }
         }
-        .frame(minWidth: 500, minHeight: 600)
+        .navigationTitle(URL(fileURLWithPath: filePath).lastPathComponent)
         .onAppear {
             loadContent()
         }

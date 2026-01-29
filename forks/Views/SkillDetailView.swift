@@ -11,8 +11,7 @@ struct SkillDetailView: View {
     @State private var showReinstallAllConfirm = false
     @State private var showRemoveAllConfirm = false
     @State private var isProcessingBulk = false
-    @State private var showReadme = false
-    @State private var readmePath: String?
+
     
     var skill: InstalledSkill? {
         skillService.installedSkills.first { $0.name == skillName }
@@ -115,10 +114,18 @@ struct SkillDetailView: View {
                             .padding(.leading, 8)
                     }
                     
-                    Button {
+                    NavigationLink {
                         if let path = skillService.getSkillMarkdownPath(skillName: skill.name) {
-                            readmePath = path
-                            showReadme = true
+                            MarkdownPreviewView(filePath: path)
+                        } else {
+                            VStack {
+                                Image(systemName: "doc.text.fill")
+                                    .font(.system(size: 48))
+                                    .foregroundColor(.secondary)
+                                    .padding()
+                                Text("Documentation Not Found")
+                                    .font(.headline)
+                            }
                         }
                     } label: {
                         Label("View", systemImage: "doc.text")
@@ -239,11 +246,7 @@ struct SkillDetailView: View {
                 } message: {
                     Text("This will reinstall \"\(skill.name)\" on all \(skill.agents.count) agents.")
                 }
-                .sheet(isPresented: $showReadme) {
-                    if let path = readmePath {
-                        MarkdownPreviewView(filePath: path)
-                    }
-                }
+
                 
             } else {
                 ContentUnavailableView("Skill Not Found", systemImage: "exclamationmark.triangle")
