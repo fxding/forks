@@ -16,15 +16,18 @@ A native macOS app for managing AI coding agent skills. Install, update, and org
 ## Installation
 
 ### Requirements
+
 - macOS 13.0+
 - Node.js (`brew install node`)
 
 ### Download
+
 1. Download from [Releases](https://github.com/fxding/forks/releases)
 2. Extract and move to Applications
 3. Right-click → Open (first launch only)
 
 ### Build from Source
+
 ```bash
 git clone https://github.com/fxding/forks.git
 cd forks

@@ -727,6 +727,57 @@ class SkillService: ObservableObject {
         }
     }
 
+    // MARK: - Helper
+    
+    func getSkillMarkdownPath(skillName: String) -> String? {
+        // 1. Try to find it in the registry source first (most reliable for original content)
+        if let entry = getRegistry()[skillName] {
+            let forkPath = (forksDir as NSString).appendingPathComponent(entry.relativeForkPath)
+            let path = (forkPath as NSString).appendingPathComponent("SKILL.md")
+            if FileManager.default.fileExists(atPath: path) {
+                return path
+            }
+            
+            // Check direct local source
+            if FileManager.default.fileExists(atPath: entry.originalSource) {
+                 let localPath = (entry.originalSource as NSString).appendingPathComponent("SKILL.md")
+                 if FileManager.default.fileExists(atPath: localPath) {
+                     return localPath
+                 }
+            }
+        }
+        
+        // 2. Fallback: Search in installed agents
+        for agent in Agent.supportedAgents {
+            let home = "/Users/\(NSUserName())"
+            let expandedPath = agent.globalPath.replacingOccurrences(of: "~", with: home)
+            
+            let skillDir = (expandedPath as NSString).appendingPathComponent(skillName) // Assuming skill name is dir name commonly
+            let skillMd = (skillDir as NSString).appendingPathComponent("SKILL.md")
+            
+            if FileManager.default.fileExists(atPath: skillMd) {
+                return skillMd
+            }
+            
+            // Also try iterating if name != dir name
+            if let items = try? FileManager.default.contentsOfDirectory(atPath: expandedPath) {
+                for item in items {
+                    let itemPath = (expandedPath as NSString).appendingPathComponent(item)
+                    let mdPath = (itemPath as NSString).appendingPathComponent("SKILL.md")
+                    if FileManager.default.fileExists(atPath: mdPath) {
+                        if let content = try? String(contentsOfFile: mdPath, encoding: .utf8),
+                           let (name, _) = parseFrontmatter(content: content),
+                           name == skillName {
+                            return mdPath
+                        }
+                    }
+                }
+            }
+        }
+        
+        return nil
+    }
+
     // MARK: - Installation
     
     func installSkills(source: String, skillNames: [String], agentCliNames: [String], global: Bool = true) async throws -> String {

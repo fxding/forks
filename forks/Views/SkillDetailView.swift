@@ -11,6 +11,8 @@ struct SkillDetailView: View {
     @State private var showReinstallAllConfirm = false
     @State private var showRemoveAllConfirm = false
     @State private var isProcessingBulk = false
+    @State private var showReadme = false
+    @State private var readmePath: String?
     
     var skill: InstalledSkill? {
         skillService.installedSkills.first { $0.name == skillName }
@@ -112,6 +114,17 @@ struct SkillDetailView: View {
                         ProgressView().controlSize(.small)
                             .padding(.leading, 8)
                     }
+                    
+                    Button {
+                        if let path = skillService.getSkillMarkdownPath(skillName: skill.name) {
+                            readmePath = path
+                            showReadme = true
+                        }
+                    } label: {
+                        Label("View", systemImage: "doc.text")
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(isProcessingBulk)
                     
                     if skill.updateAvailable {
                         Button {
@@ -225,6 +238,11 @@ struct SkillDetailView: View {
                     Button("Cancel", role: .cancel) {}
                 } message: {
                     Text("This will reinstall \"\(skill.name)\" on all \(skill.agents.count) agents.")
+                }
+                .sheet(isPresented: $showReadme) {
+                    if let path = readmePath {
+                        MarkdownPreviewView(filePath: path)
+                    }
                 }
                 
             } else {
