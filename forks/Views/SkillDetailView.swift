@@ -259,7 +259,7 @@ struct SkillDetailView: View {
         processingAgent = agentName
         Task {
             do {
-                try skillService.uninstallSkill(skillName: skillName, agentName: agentName)
+                _ = try await skillService.uninstallSkill(skillName: skillName, agentName: agentName)
                 skillService.getInstalledSkills()
             } catch {
                 print("Failed to uninstall: \(error)")
@@ -337,7 +337,7 @@ struct SkillDetailView: View {
         Task {
             for agentName in skill.agents {
                 do {
-                    try skillService.uninstallSkill(skillName: skillName, agentName: agentName)
+                    _ = try await skillService.uninstallSkill(skillName: skillName, agentName: agentName)
                 } catch {
                     print("Error removing from \(agentName): \(error)")
                 }

@@ -150,41 +150,31 @@ class SkillService: ObservableObject {
     
 
     
-    func uninstallSkill(skillName: String, agentName: String) throws {
+    func uninstallSkill(skillName: String, agentName: String) async throws -> String {
         let agents = Agent.supportedAgents
         guard let agent = agents.first(where: { $0.name == agentName }) else {
              throw NSError(domain: "SkillService", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown agent"])
         }
         
-        let expandedPath = NSString(string: agent.globalPath).expandingTildeInPath
-        let skillsDir = expandedPath
+        // Use npx skills remove
+        var args = ["skills", "remove", skillName]
+        args.append(contentsOf: ["--agent", agent.cliName])
+        args.append("--global")
+        args.append("--yes")
         
-        let items = try FileManager.default.contentsOfDirectory(atPath: skillsDir)
-        for item in items {
-            let itemPath = (skillsDir as NSString).appendingPathComponent(item)
-            var isDir: ObjCBool = false
-            if FileManager.default.fileExists(atPath: itemPath, isDirectory: &isDir), isDir.boolValue {
-                let skillMdPath = (itemPath as NSString).appendingPathComponent("SKILL.md")
-                if FileManager.default.fileExists(atPath: skillMdPath) {
-                    if let content = try? String(contentsOfFile: skillMdPath, encoding: .utf8),
-                       let (name, _) = parseFrontmatter(content: content) {
-                        if name == skillName {
-                            try FileManager.default.removeItem(atPath: itemPath)
-                            return
-                        }
-                    }
-                }
-            }
+        print("[DEBUG] Uninstalling \(skillName) from \(agentName) using npx")
+        let output = try await runShellCommandWithLogs(command: "npx", args: args, environment: ["PATH": "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"])
+        
+        // Refresh logic will be handled by caller or we can do it here
+        // But runShellCommandWithLogs runs on background thread mostly
+        await MainActor.run {
+            self.getInstalledSkills()
         }
         
-        throw NSError(domain: "SkillService", code: 404, userInfo: [NSLocalizedDescriptionKey: "Skill not found"])
+        return output
     }
     
-    // Wrapper to ensure UI update
-    func uninstallSkillWithRefresh(skillName: String, agentName: String) {
-        try? uninstallSkill(skillName: skillName, agentName: agentName)
-        getInstalledSkills()
-    }
+
     
     // Check recursively
     private func findSkillsInDir(dir: URL, skills: inout [Skill], baseDir: URL) {
@@ -1009,7 +999,8 @@ class SkillService: ObservableObject {
         }
         
         // 2. Re-install/Update
-        try uninstallSkill(skillName: skillName, agentName: agentName)
+        // 2. Re-install/Update
+        _ = try await uninstallSkill(skillName: skillName, agentName: agentName)
         
         // Get agent cli name
         let agentCli = Agent.supportedAgents.first(where: { $0.name == agentName })?.cliName ?? agentName.lowercased()
