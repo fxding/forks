@@ -18,6 +18,7 @@ struct AddSkillToProjectSheet: View {
     @State private var isLoading = false
     @State private var isInstalling = false
     @State private var errorMessage: String?
+    @State private var installTask: Task<Void, Never>?
     
     var detectedProjectAgents: [Agent] {
         projectService.getProjectAgents(project: project)
@@ -162,20 +163,70 @@ struct AddSkillToProjectSheet: View {
                     .font(.caption)
             }
             
-            if isLoading || isInstalling {
-                ProgressView(isInstalling ? "Installing..." : "Loading...")
+            if isLoading {
+                ProgressView("Loading...")
                     .controlSize(.small)
             }
             
-            HStack {
-                Button("Cancel") { dismiss() }
-                    .keyboardShortcut(.cancelAction)
-                
-                Button("Install") {
-                    installSkill()
+            if isInstalling {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                        Text("Installing...")
+                            .font(.headline)
+                    }
+                    
+                    // Log Panel
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Output")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        ScrollViewReader { proxy in
+                            ScrollView {
+                                Text(skillService.logs.isEmpty ? "Waiting for output..." : skillService.logs)
+                                    .font(.system(.caption, design: .monospaced))
+                                    .foregroundColor(.primary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(8)
+                                    .id("logBottom")
+                            }
+                            .frame(maxWidth: .infinity, minHeight: 150, maxHeight: 200)
+                            .background(Color(.textBackgroundColor))
+                            .cornerRadius(8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                            )
+                            .onChange(of: skillService.logs) { _ in
+                                withAnimation {
+                                    proxy.scrollTo("logBottom", anchor: .bottom)
+                                }
+                            }
+                        }
+                    }
                 }
-                .disabled(selectedSkillNames.isEmpty || selectedAgents.isEmpty || isInstalling)
-                .keyboardShortcut(.defaultAction)
+            }
+            
+            HStack {
+                Button("Cancel") {
+                    if isInstalling {
+                        skillService.cancelCurrentOperation()
+                        installTask?.cancel()
+                        isInstalling = false
+                    }
+                    dismiss()
+                }
+                .keyboardShortcut(.cancelAction)
+                
+                if !isInstalling {
+                    Button("Install") {
+                        installSkill()
+                    }
+                    .disabled(selectedSkillNames.isEmpty || selectedAgents.isEmpty)
+                    .keyboardShortcut(.defaultAction)
+                }
             }
             .padding(.top, 8)
         }
@@ -191,11 +242,12 @@ struct AddSkillToProjectSheet: View {
         
         isInstalling = true
         errorMessage = nil
+        skillService.clearLogs()
         
         guard let registrySource = selectedSource else { return }
         let source = registrySource.path
         
-        Task {
+        installTask = Task {
             print("[DEBUG] AddSkillToProjectSheet: Install triggered for \(selectedSkillNames) from \(source)")
             do {
                 // Install to project path (not global)
@@ -211,7 +263,10 @@ struct AddSkillToProjectSheet: View {
                 dismiss()
             } catch {
                 print("[DEBUG] AddSkillToProjectSheet: Install failed with error: \(error)")
-                errorMessage = error.localizedDescription
+                // Don't show error for cancellation
+                if !skillService.isCancelled {
+                    errorMessage = error.localizedDescription
+                }
             }
             isInstalling = false
         }

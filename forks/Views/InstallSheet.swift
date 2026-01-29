@@ -32,6 +32,7 @@ struct InstallSheet: View {
     @State private var installError: String?
     @State private var installationMode: InstallationMode = .global
     @State private var selectedProject: Project?
+    @State private var installTask: Task<Void, Never>?
     
     enum InstallationMode: String, CaseIterable, Identifiable {
         case global = "Global"
@@ -46,9 +47,45 @@ struct InstallSheet: View {
                 .padding(.top)
             
             if isInstalling {
-                ProgressView("Installing...")
-                    .controlSize(.regular)
-                    .padding()
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                        Text("Installing...")
+                            .font(.headline)
+                    }
+                    
+                    // Log Panel
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Output")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        ScrollViewReader { proxy in
+                            ScrollView {
+                                Text(skillService.logs.isEmpty ? "Waiting for output..." : skillService.logs)
+                                    .font(.system(.caption, design: .monospaced))
+                                    .foregroundColor(.primary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(8)
+                                    .id("logBottom")
+                            }
+                            .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 300)
+                            .background(Color(.textBackgroundColor))
+                            .cornerRadius(8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                            )
+                            .onChange(of: skillService.logs) { _ in
+                                withAnimation {
+                                    proxy.scrollTo("logBottom", anchor: .bottom)
+                                }
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal)
             } else {
                 VStack(spacing: 20) {
                     Picker("", selection: $installationMode) {
@@ -113,19 +150,26 @@ struct InstallSheet: View {
             
             HStack {
                 Button("Cancel") {
+                    if isInstalling {
+                        skillService.cancelCurrentOperation()
+                        installTask?.cancel()
+                        isInstalling = false
+                    }
                     dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
                 
-                Button("Install") {
-                    install()
+                if !isInstalling {
+                    Button("Install") {
+                        install()
+                    }
+                    .disabled(selectedAgents.isEmpty || (installationMode == .project && selectedProject == nil))
+                    .keyboardShortcut(.defaultAction)
                 }
-                .disabled(selectedAgents.isEmpty || isInstalling || (installationMode == .project && selectedProject == nil))
-                .keyboardShortcut(.defaultAction)
             }
             .padding()
         }
-        .frame(minWidth: 350)
+        .frame(minWidth: 500)
         .padding()
         .onAppear {
             agentService.refreshAgents()
@@ -135,7 +179,8 @@ struct InstallSheet: View {
     private func install() {
         isInstalling = true
         installError = nil
-        Task {
+        skillService.clearLogs()
+        installTask = Task {
             do {
                 if installationMode == .global {
                     _ = try await skillService.installSkills(
@@ -155,7 +200,10 @@ struct InstallSheet: View {
                 onSuccess?()
                 dismiss()
             } catch {
-                installError = error.localizedDescription
+                // Don't show error for cancellation
+                if !skillService.isCancelled {
+                    installError = error.localizedDescription
+                }
             }
             isInstalling = false
         }

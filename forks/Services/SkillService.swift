@@ -6,8 +6,29 @@ class SkillService: ObservableObject {
     @Published var availableSkills: [Skill] = []
     @Published var installedSkills: [InstalledSkill] = []
     @Published var registrySources: [RegistrySource] = []
+    @Published var logs: String = ""
+    @Published var isCancelled: Bool = false
     
     private let forksDir = NSString(string: "~/.forks").expandingTildeInPath
+    private var currentProcess: Process?
+    
+    func clearLogs() {
+        logs = ""
+        isCancelled = false
+    }
+    
+    func cancelCurrentOperation() {
+        isCancelled = true
+        if let process = currentProcess, process.isRunning {
+            process.terminate()
+            logs += "\n⚠️ Operation cancelled by user\n"
+        }
+        currentProcess = nil
+    }
+    
+    private func appendLog(_ message: String) {
+        logs += message
+    }
     
     func getInstalledSkills() {
         var skillMap: [String: InstalledSkill] = [:]
@@ -339,6 +360,137 @@ class SkillService: ObservableObject {
         }
     }
     
+    /// Streaming version of runShellCommand that updates the logs property for UI display
+    private func runShellCommandWithLogs(command: String, args: [String], environment: [String: String]? = nil, currentDirectory: String? = nil) async throws -> String {
+        // Check if already cancelled before starting
+        if isCancelled {
+            throw NSError(domain: "SkillService", code: -999, userInfo: [NSLocalizedDescriptionKey: "Operation cancelled"])
+        }
+        
+        let commandLine = "\(command) \(args.joined(separator: " "))"
+        print("[DEBUG] runShellCommandWithLogs started: \(commandLine)")
+        
+        await MainActor.run {
+            self.appendLog("$ \(commandLine)\n")
+        }
+        
+        if let cwd = currentDirectory {
+            print("[DEBUG] CWD: \(cwd)")
+            await MainActor.run {
+                self.appendLog("  (in \(cwd))\n")
+            }
+        }
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                let task = Process()
+                
+                // Store process reference for cancellation
+                DispatchQueue.main.async {
+                    self?.currentProcess = task
+                }
+                
+                // Resolve executable path
+                var launchPath = "/usr/bin/" + command
+                if !FileManager.default.fileExists(atPath: launchPath) {
+                    launchPath = "/usr/local/bin/" + command
+                }
+                if !FileManager.default.fileExists(atPath: launchPath) {
+                    launchPath = "/opt/homebrew/bin/" + command
+                }
+                
+                task.executableURL = URL(fileURLWithPath: launchPath)
+                task.arguments = args
+                
+                // Prepare environment with non-interactive flags
+                var finalEnv = environment ?? ProcessInfo.processInfo.environment
+                finalEnv["npm_config_yes"] = "true"
+                finalEnv["CI"] = "true"
+                task.environment = finalEnv
+                
+                if let currentDirectory = currentDirectory {
+                    task.currentDirectoryURL = URL(fileURLWithPath: currentDirectory)
+                }
+                
+                let outPipe = Pipe()
+                task.standardOutput = outPipe
+                task.standardError = outPipe
+                
+                // Add stdin pipe to close it immediately to prevent interactive hangs
+                let inPipe = Pipe()
+                task.standardInput = inPipe
+                
+                var accumulatedData = Data()
+                let group = DispatchGroup()
+                group.enter()
+                
+                outPipe.fileHandleForReading.readabilityHandler = { handle in
+                    let data = handle.availableData
+                    if data.isEmpty {
+                        // EOF
+                        outPipe.fileHandleForReading.readabilityHandler = nil
+                        group.leave()
+                    } else {
+                        accumulatedData.append(data)
+                        if let str = String(data: data, encoding: .utf8) {
+                            print("[DEBUG-STREAM] \(str.trimmingCharacters(in: .whitespacesAndNewlines))")
+                            // Update logs on main thread
+                            DispatchQueue.main.async {
+                                self?.logs += str
+                            }
+                        }
+                    }
+                }
+                
+                do {
+                    print("[DEBUG] Launching process: \(launchPath)")
+                    try task.run()
+                    
+                    // Close stdin immediately to fail any interactive prompts
+                    try? inPipe.fileHandleForWriting.close()
+                    
+                    print("[DEBUG] Process running...")
+                    task.waitUntilExit()
+                    print("[DEBUG] Process exited with status: \(task.terminationStatus)")
+                    
+                    // Clear process reference
+                    DispatchQueue.main.async {
+                        self?.currentProcess = nil
+                    }
+                    
+                    // Wait for all output to be read
+                    group.wait()
+                    
+                    let output = String(data: accumulatedData, encoding: .utf8) ?? ""
+                    
+                    // Check if terminated due to cancellation (SIGTERM = 15)
+                    if task.terminationStatus == 15 || (self?.isCancelled ?? false) {
+                        continuation.resume(throwing: NSError(domain: "SkillService", code: -999, userInfo: [NSLocalizedDescriptionKey: "Operation cancelled"]))
+                    } else if task.terminationStatus == 0 {
+                        print("[DEBUG] Command SUCCESS")
+                        DispatchQueue.main.async {
+                            self?.logs += "\n✅ Command completed successfully\n"
+                        }
+                        continuation.resume(returning: output)
+                    } else {
+                        print("[DEBUG] Command FAILED: \(output)")
+                        DispatchQueue.main.async {
+                            self?.logs += "\n❌ Command failed with exit code \(task.terminationStatus)\n"
+                        }
+                        continuation.resume(throwing: NSError(domain: "Shell", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: output]))
+                    }
+                } catch {
+                    print("[DEBUG] Process Launch Error: \(error)")
+                    DispatchQueue.main.async {
+                        self?.currentProcess = nil
+                        self?.logs += "\n❌ Error: \(error.localizedDescription)\n"
+                    }
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+    
     // MARK: - Forks & Registry Management
     
     private let registryPath = NSString(string: "~/.forks/registry.json").expandingTildeInPath
@@ -598,10 +750,10 @@ class SkillService: ObservableObject {
             
             if FileManager.default.fileExists(atPath: forkPath) {
                 // Update cache
-                try await runShellCommand(command: "git", args: ["-C", forkPath, "pull"])
+                try await runShellCommandWithLogs(command: "git", args: ["-C", forkPath, "pull"])
             } else {
                 let url = (!source.contains("://") && !source.hasPrefix("git@")) ? "https://github.com/\(source).git" : source
-                try await runShellCommand(command: "git", args: ["clone", url, forkPath])
+                try await runShellCommandWithLogs(command: "git", args: ["clone", url, forkPath])
             }
         } else {
             // It's a local folder: Use directly
@@ -642,7 +794,7 @@ class SkillService: ObservableObject {
         }
         args.append("--yes")
         
-        let output = try await runShellCommand(command: "npx", args: args, environment: ["PATH": "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"])
+        let output = try await runShellCommandWithLogs(command: "npx", args: args, environment: ["PATH": "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"])
         
         await MainActor.run {
              getInstalledSkills()
@@ -677,11 +829,11 @@ class SkillService: ObservableObject {
             if FileManager.default.fileExists(atPath: forkPath) {
                 // Update cache
                 print("[DEBUG] Updating existing repo at \(forkPath)")
-                try await runShellCommand(command: "git", args: ["-C", forkPath, "pull"])
+                try await runShellCommandWithLogs(command: "git", args: ["-C", forkPath, "pull"])
             } else {
                 let url = (!source.contains("://") && !source.hasPrefix("git@")) ? "https://github.com/\(source).git" : source
                 print("[DEBUG] Cloning new repo from \(url) to \(forkPath)")
-                try await runShellCommand(command: "git", args: ["clone", url, forkPath])
+                try await runShellCommandWithLogs(command: "git", args: ["clone", url, forkPath])
             }
         } else {
             // It's a local folder: Use directly
@@ -727,7 +879,7 @@ class SkillService: ObservableObject {
         args.append("--yes")
         
         print("[DEBUG] Executing npx command")
-        let output = try await runShellCommand(command: "npx", args: args, environment: ["PATH": "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"], currentDirectory: projectPath)
+        let output = try await runShellCommandWithLogs(command: "npx", args: args, environment: ["PATH": "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"], currentDirectory: projectPath)
         print("[DEBUG] Installation complete")
         
         return output
