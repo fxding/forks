@@ -24,7 +24,11 @@ A native macOS app for managing AI coding agent skills. Install, update, and org
 
 1. Download from [Releases](https://github.com/fxding/forks/releases)
 2. Extract and move to Applications
-3. Right-click → Open (first launch only)
+3. Run the following command to bypass Gatekeeper:
+   ```bash
+   xattr -cr /Applications/forks.app
+   ```
+4. Double-click to launch
 
 ### Build from Source
 
