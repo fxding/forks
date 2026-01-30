@@ -11,6 +11,7 @@ import SwiftUI
 struct forksApp: App {
     @State private var showNpxAlert = false
     @State private var npxCheckComplete = false
+    @StateObject private var updateService = UpdateService()
     
     var body: some Scene {
         WindowGroup {
@@ -33,6 +34,13 @@ struct forksApp: App {
                 } message: {
                     Text("This app requires Node.js (npx) to install skills. Please install Node.js to use all features.\n\nInstall options:\n• Download from nodejs.org\n• Run: brew install node")
                 }
+        }
+        .commands {
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates...") {
+                    updateService.checkForUpdates()
+                }
+            }
         }
     }
     
