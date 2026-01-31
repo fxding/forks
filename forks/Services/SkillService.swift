@@ -1125,7 +1125,7 @@ class SkillService: ObservableObject {
         // Get agent cli name
         let agentCli = Agent.supportedAgents.first(where: { $0.name == agentName })?.cliName ?? agentName.lowercased()
         
-        var args = ["add-skill", forkPath, "--skill", skillName, "--agent", agentCli, "--global", "--yes"]
+        let args = ["skills", "add", forkPath, "--skill", skillName, "--agent", agentCli, "--global", "--yes"]
         _ = try await runShellCommand(command: "npx", args: args, environment: ["PATH": "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"])
         
         // 3. Update Registry
