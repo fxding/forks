@@ -52,6 +52,31 @@ jobs:
       - name: Get tag name
         id: tag
         run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Setup Sparkle tools
+        run: |
+          echo "Installing Sparkle tools..."
+          mkdir -p tools/sparkle
+          # Download and extract just the binary tools needed
+          curl -L https://github.com/sparkle-project/Sparkle/releases/download/2.6.4/Sparkle-2.6.4.tar.xz | tar -xJ -C tools/sparkle
+          chmod +x ./tools/sparkle/bin/generate_appcast
+
+      - name: Generate Appcast
+        env:
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          mkdir -p release_dist
+          cp forks-macos.zip release_dist/forks.zip
+          ./tools/sparkle/bin/generate_appcast release_dist
+          cp release_dist/appcast.xml appcast.xml
+
+      - name: Commit Appcast
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add appcast.xml
+          git commit -m "Update appcast for ${{ steps.tag.outputs.TAG_NAME }} [skip ci]" || echo "No changes to commit"
+          git push origin main
       
       - name: Create Release
         uses: softprops/action-gh-release@v1
