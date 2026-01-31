@@ -12,6 +12,35 @@ class SkillService: ObservableObject {
     private let forksDir = NSString(string: "~/.forks").expandingTildeInPath
     private var currentProcess: Process?
     
+    private let SKIP_DIRS = ["node_modules", ".git", "dist", "build", "__pycache__", "DerivedData"]
+    
+    private func shouldInstallInternalSkills() -> Bool {
+        let envVal = ProcessInfo.processInfo.environment["INSTALL_INTERNAL_SKILLS"]
+        return envVal == "1" || envVal == "true"
+    }
+    
+    private func getPrioritySearchDirs(searchPath: String) -> [String] {
+        var paths: [String] = [
+            searchPath,
+            (searchPath as NSString).appendingPathComponent("skills"),
+            (searchPath as NSString).appendingPathComponent("skills/.curated"),
+            (searchPath as NSString).appendingPathComponent("skills/.experimental"),
+            (searchPath as NSString).appendingPathComponent("skills/.system")
+        ]
+        
+        // Add agent-specific paths from Agent model
+        for agent in Agent.supportedAgents {
+            let path = (searchPath as NSString).appendingPathComponent(agent.projectPath)
+            if !paths.contains(path) {
+                paths.append(path)
+            }
+        }
+        
+        return paths
+    }
+
+
+    
     func clearLogs() {
         logs = ""
         isCancelled = false
@@ -101,27 +130,28 @@ class SkillService: ObservableObject {
         let cloneDir = tempDir.appendingPathComponent("repo-\(id)")
         
         let url: String
-        if !source.contains("://") && !source.hasPrefix("git@") {
+        let isLocal = !source.contains("://") && !source.hasPrefix("git@") && FileManager.default.fileExists(atPath: source)
+        
+        if isLocal {
+            url = source
+        } else if !source.contains("://") && !source.hasPrefix("git@") {
             url = "https://github.com/\(source).git"
         } else {
             url = source
         }
         
-        var foundSkills: [Skill] = []
-        
-        if FileManager.default.fileExists(atPath: url) {
-             print("Loading skills from local path: \(url)")
-             findSkillsInDir(dir: URL(fileURLWithPath: url), skills: &foundSkills, baseDir: URL(fileURLWithPath: url))
-             
-             if foundSkills.isEmpty {
-                 throw NSError(domain: "SkillService", code: 1, userInfo: [NSLocalizedDescriptionKey: "No skills found in local path"])
-             }
+        let searchPath: String
+        if isLocal {
+             searchPath = url
         } else {
             // Git clone
             try await runShellCommand(command: "git", args: ["clone", "--depth", "1", url, cloneDir.path])
-            
-            findSkillsInDir(dir: cloneDir, skills: &foundSkills, baseDir: cloneDir)
-            
+            searchPath = cloneDir.path
+        }
+        
+        let foundSkills = discoverSkills(in: searchPath)
+        
+        if !isLocal {
             // Cleanup
             try? FileManager.default.removeItem(at: cloneDir)
         }
@@ -147,6 +177,56 @@ class SkillService: ObservableObject {
         
         self.availableSkills = Array(skillMap.values).sorted { $0.name < $1.name }
     }
+
+    private func discoverSkills(in searchPath: String) -> [Skill] {
+        var foundSkills: [Skill] = []
+        var seenNames = Set<String>()
+        
+        // 1. Direct check (if path is a skill)
+        let rootSkillMd = (searchPath as NSString).appendingPathComponent("SKILL.md")
+        if FileManager.default.fileExists(atPath: rootSkillMd) {
+            if let content = try? String(contentsOfFile: rootSkillMd, encoding: .utf8),
+               let skill = parseSkillMd(content: content, path: rootSkillMd) {
+                foundSkills.append(skill)
+                seenNames.insert(skill.name)
+            }
+        }
+        
+        // 2. Priority search
+        let priorityDirs = getPrioritySearchDirs(searchPath: searchPath)
+        for dir in priorityDirs {
+            var isDir: ObjCBool = false
+            if FileManager.default.fileExists(atPath: dir, isDirectory: &isDir), isDir.boolValue {
+                if let items = try? FileManager.default.contentsOfDirectory(atPath: dir) {
+                    for item in items {
+                        let skillDir = (dir as NSString).appendingPathComponent(item)
+                        var itemIsDir: ObjCBool = false
+                        if FileManager.default.fileExists(atPath: skillDir, isDirectory: &itemIsDir), itemIsDir.boolValue {
+                            let skillMdPath = (skillDir as NSString).appendingPathComponent("SKILL.md")
+                            if FileManager.default.fileExists(atPath: skillMdPath) {
+                                if let content = try? String(contentsOfFile: skillMdPath, encoding: .utf8),
+                                   let skill = parseSkillMd(content: content, path: skillMdPath) {
+                                    if !seenNames.contains(skill.name) {
+                                        foundSkills.append(skill)
+                                        seenNames.insert(skill.name)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 3. Fallback recursive search
+        if foundSkills.isEmpty {
+            findSkillsInDir(dir: URL(fileURLWithPath: searchPath), skills: &foundSkills, baseDir: URL(fileURLWithPath: searchPath), seenNames: &seenNames)
+        }
+        
+        return foundSkills
+    }
+
+
     
 
     
@@ -177,13 +257,7 @@ class SkillService: ObservableObject {
 
     
     // Check recursively
-    private func findSkillsInDir(dir: URL, skills: inout [Skill], baseDir: URL) {
-        guard let enumerator = FileManager.default.enumerator(at: dir, includingPropertiesForKeys: [.isDirectoryKey, .nameKey], options: [.skipsHiddenFiles]) else { return }
-        
-        // Swift's enumerator is recursive by default but let's do manual recursion if needed or use this
-        // Actually, let's implement the Rust-like logic manually to be safe about depth and specific structure if needed.
-        // But Rust's logic was recursive.
-        
+    private func findSkillsInDir(dir: URL, skills: inout [Skill], baseDir: URL, seenNames: inout Set<String>) {
         do {
             let items = try FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)
             for item in items {
@@ -192,14 +266,16 @@ class SkillService: ObservableObject {
                 if FileManager.default.fileExists(atPath: itemPath.path, isDirectory: &isDir) {
                     if isDir.boolValue {
                         let name = item.lastPathComponent
-                        if !name.hasPrefix(".") && name != "node_modules" && name != "dist" && name != "build" && name != "DerivedData" {
-                            findSkillsInDir(dir: itemPath, skills: &skills, baseDir: baseDir)
+                        if !name.hasPrefix(".") && !SKIP_DIRS.contains(name) {
+                            findSkillsInDir(dir: itemPath, skills: &skills, baseDir: baseDir, seenNames: &seenNames)
                         }
                     } else if item.lastPathComponent == "SKILL.md" {
-                        if let content = try? String(contentsOf: itemPath, encoding: .utf8),
-                           let (name, description) = parseFrontmatter(content: content) {
-                            let agent = detectAgentFromPath(path: itemPath.path)
-                            skills.append(Skill(name: name, description: description, availableAgents: agent != nil ? [agent!] : []))
+                        if let content = try? String(contentsOfFile: itemPath.path, encoding: .utf8),
+                           let skill = parseSkillMd(content: content, path: itemPath.path) {
+                            if !seenNames.contains(skill.name) {
+                                skills.append(skill)
+                                seenNames.insert(skill.name)
+                            }
                         }
                     }
                 }
@@ -208,7 +284,20 @@ class SkillService: ObservableObject {
             print("Failed to read dir \(dir): \(error)")
         }
     }
+
     
+    private func parseSkillMd(content: String, path: String) -> Skill? {
+        guard let (name, description, metadata) = parseFrontmatterWithMetadata(content: content) else { return nil }
+        
+        let isInternal = (metadata["internal"] as? Bool) == true
+        if isInternal && !shouldInstallInternalSkills() {
+            return nil
+        }
+        
+        let agent = detectAgentFromPath(path: path)
+        return Skill(name: name, description: description, availableAgents: agent != nil ? [agent!] : [], metadata: metadata)
+    }
+
     private func detectAgentFromPath(path: String) -> String? {
         let pathLower = path.lowercased()
         
@@ -232,8 +321,9 @@ class SkillService: ObservableObject {
         
         return nil
     }
-    
-    private func parseFrontmatter(content: String) -> (name: String, description: String?)? {
+
+
+    private func parseFrontmatterWithMetadata(content: String) -> (name: String, description: String?, metadata: [String: AnyHashable])? {
         guard content.hasPrefix("---") else { return nil }
         let components = content.components(separatedBy: "---")
         guard components.count >= 3 else { return nil }
@@ -241,21 +331,53 @@ class SkillService: ObservableObject {
         let frontmatter = components[1]
         var name: String?
         var description: String?
+        var metadata: [String: AnyHashable] = [:]
+        
+        var currentTopLevelKey: String?
         
         frontmatter.enumerateLines { line, _ in
             let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.isEmpty || trimmed.hasPrefix("#") { return }
+            
             if trimmed.hasPrefix("name:") {
-                name = String(trimmed.dropFirst(5)).trimmingCharacters(in: .whitespaces)
+                name = String(trimmed.dropFirst(5)).trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(in: .init(charactersIn: "\"'"))
             } else if trimmed.hasPrefix("description:") {
-                description = String(trimmed.dropFirst(12)).trimmingCharacters(in: .whitespaces)
+                description = String(trimmed.dropFirst(12)).trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(in: .init(charactersIn: "\"'"))
+            } else if trimmed.hasPrefix("metadata:") {
+                currentTopLevelKey = "metadata"
+            } else if let keyPath = currentTopLevelKey, line.hasPrefix("  ") {
+                // Simple nested parsing
+                let subLine = line.trimmingCharacters(in: .whitespaces)
+                let subParts = subLine.components(separatedBy: ":")
+                if subParts.count >= 2 {
+                    let k = subParts[0].trimmingCharacters(in: .whitespaces)
+                    let v = subParts[1...].joined(separator: ":").trimmingCharacters(in: .whitespaces)
+                    
+                    if keyPath == "metadata" {
+                        if v == "true" { metadata[k] = true }
+                        else if v == "false" { metadata[k] = false }
+                        else { metadata[k] = v.trimmingCharacters(in: .init(charactersIn: "\"'")) }
+                    }
+                }
+            } else {
+                currentTopLevelKey = nil
             }
         }
         
         if let name = name {
-            return (name, description)
+            return (name, description, metadata)
         }
         return nil
     }
+    
+    // Kept for backward compatibility if needed by other methods not yet updated
+    private func parseFrontmatter(content: String) -> (name: String, description: String?)? {
+        if let res = parseFrontmatterWithMetadata(content: content) {
+            return (res.name, res.description)
+        }
+        return nil
+    }
+
     
     private func runShellCommand(command: String, args: [String], environment: [String: String]? = nil, currentDirectory: String? = nil) async throws -> String {
         print("[DEBUG] runShellCommand started: \(command) \(args.joined(separator: " "))")
@@ -697,14 +819,12 @@ class SkillService: ObservableObject {
     
     func getSkillsInSource(source: String) -> [Skill] {
         let forkPath = getForkPath(source: source)
-        var foundSkills: [Skill] = []
-        
         if FileManager.default.fileExists(atPath: forkPath) {
-            findSkillsInDir(dir: URL(fileURLWithPath: forkPath), skills: &foundSkills, baseDir: URL(fileURLWithPath: forkPath))
+            return discoverSkills(in: forkPath).sorted { $0.name < $1.name }
         }
-        
-        return foundSkills.sorted { $0.name < $1.name }
+        return []
     }
+
     
     private func getForkPath(source: String) -> String {
         if source.contains("://") || source.hasPrefix("git@") || !FileManager.default.fileExists(atPath: source) {

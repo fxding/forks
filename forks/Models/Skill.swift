@@ -5,6 +5,17 @@ struct Skill: Identifiable, Hashable {
     let name: String
     let description: String?
     var availableAgents: [String] = [] // List of agent names that support this skill (found in repo)
+    var metadata: [String: AnyHashable] = [:] // Additional metadata like "internal"
+    
+    // Manual Hashable conformance because of [String: AnyHashable]
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(name)
+    }
+    
+    static func == (lhs: Skill, rhs: Skill) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
 struct InstalledSkill: Identifiable, Hashable {
@@ -24,4 +35,6 @@ struct SkillMetadata: Codable {
     var lastCheckedForUpdates: String? // ISO 8601 format
     var updateAvailable: Bool
     let version: String
+    var internalSkill: Bool? // Optional internal flag
 }
+
