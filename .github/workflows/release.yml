@@ -77,6 +77,42 @@ jobs:
           chmod +x ./scripts/build.sh
           ./scripts/build.sh
 
+      - name: Verify built app compatibility
+        run: |
+          set -euo pipefail
+          
+          APP_PLIST="build/forks.app/Contents/Info.plist"
+          APP_BIN="build/forks.app/Contents/MacOS/forks"
+          
+          if [ ! -f "$APP_PLIST" ]; then
+            echo "Missing Info.plist at: $APP_PLIST"
+            exit 1
+          fi
+          
+          if [ ! -f "$APP_BIN" ]; then
+            echo "Missing app binary at: $APP_BIN"
+            exit 1
+          fi
+          
+          MIN_OS=$(/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" "$APP_PLIST")
+          echo "LSMinimumSystemVersion=$MIN_OS"
+          
+          if [ "$MIN_OS" != "13.0" ]; then
+            echo "Expected LSMinimumSystemVersion=13.0 (update forks.xcodeproj if you intentionally change support)."
+            exit 1
+          fi
+          
+          ARCHS=$(lipo -archs "$APP_BIN")
+          echo "Binary archs: $ARCHS"
+          
+          case " $ARCHS " in
+            *" arm64 "*) ;;
+            *)
+              echo "Missing arm64 slice; Apple Silicon (M1/M2/M3/...) will not run natively."
+              exit 1
+              ;;
+          esac
+
       # ===========================================
       # 6. Package (ZIP + DMG)
       # ===========================================
