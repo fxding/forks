@@ -24,7 +24,7 @@ export DEVELOPER_ID="${DEVELOPER_ID:-}"
 export NOTARIZATION_KEYCHAIN_PROFILE="${NOTARIZATION_KEYCHAIN_PROFILE:-forks-notarization}"
 
 # GitHub
-export GITHUB_REPO="nicepkg/forks"
+export GITHUB_REPO="fxding/forks"
 
 # Sparkle
 export SPARKLE_PRIVATE_KEY_PATH="${PROJECT_DIR}/.sparkle_private_key"
