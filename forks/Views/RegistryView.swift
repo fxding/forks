@@ -17,96 +17,18 @@ struct RegistryView: View {
 
                     List {
                         ForEach(skillService.registrySources) { source in
-                            NavigationLink(destination: RegistrySourceDetailView(source: source, skillService: skillService)) {
-                                HStack(spacing: 16) {
-                                    // Icon
-                                    Image(systemName: source.type == "Git" ? "globe" : "folder")
-                                        .font(.title2)
-                                        .padding(10)
-                                        .background(
-                                            (source.type == "Git" ? Color.blue : Color.orange).opacity(0.1)
-                                        )
-                                        .foregroundColor(source.type == "Git" ? .blue : .orange)
-                                        .cornerRadius(8)
-                                    
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(source.path)
-                                            .font(.headline)
-                                            .lineLimit(1)
-                                            .truncationMode(.middle)
-                                        
-                                        HStack(spacing: 8) {
-                                            Text(source.type)
-                                                .font(.caption2)
-                                                .padding(.horizontal, 6)
-                                                .padding(.vertical, 2)
-                                                .background(
-                                                    (source.type == "Git" ? Color.blue : Color.orange).opacity(0.1)
-                                                )
-                                                .foregroundColor(source.type == "Git" ? .blue : .orange)
-                                                .cornerRadius(4)
-                                            
-                                            if let lastChecked = source.lastChecked {
-                                                Text("Checked \(lastChecked.formatted(date: .numeric, time: .shortened))")
-                                                    .font(.caption)
-                                                    .foregroundColor(.secondary)
-                                            }
+                            NavigationLink(value: source) {
+                                RegistrySourceRow(
+                                    source: source,
+                                    onDelete: { showDeleteSourceConfirm = source.id },
+                                    onOpen: {
+                                        if source.type == "Local" {
+                                            NSWorkspace.shared.open(URL(fileURLWithPath: source.path))
+                                        } else {
+                                            openWebLink(source: source.path)
                                         }
                                     }
-                                    
-                                    Spacer()
-                                    
-                                    // Summary Info (Skills)
-                                    if !source.skills.isEmpty {
-                                        VStack(alignment: .trailing, spacing: 2) {
-                                            HStack(spacing: 4) {
-                                                Image(systemName: "sparkles")
-                                                    .font(.caption)
-                                                Text("\(source.skills.count)")
-                                                    .font(.headline)
-                                            }
-                                            .foregroundColor(.blue)
-                                            
-                                            Text(source.skills.prefix(2).joined(separator: ", ") + (source.skills.count > 2 ? " +\(source.skills.count - 2)" : ""))
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
-                                                .lineLimit(1)
-                                                .frame(maxWidth: 150, alignment: .trailing)
-                                        }
-                                    } else {
-                                        Text("—")
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    
-                                    // Actions
-                                    HStack(spacing: 0) {
-                                        // Delete button for all sources
-                                        Button {
-                                            showDeleteSourceConfirm = source.id
-                                        } label: {
-                                            Image(systemName: "trash.circle")
-                                                .foregroundColor(.red)
-                                        }
-                                        .buttonStyle(.borderless)
-                                        .help("Delete from App")
-                                        .padding(.leading, 8)
-                                        
-                                        Button {
-                                            if source.type == "Local" {
-                                                NSWorkspace.shared.open(URL(fileURLWithPath: source.path))
-                                            } else {
-                                                openWebLink(source: source.path)
-                                            }
-                                        } label: {
-                                            Image(systemName: source.type == "Git" ? "safari" : "folder")
-                                                .foregroundColor(.secondary)
-                                        }
-                                        .buttonStyle(.borderless)
-                                        .help("Open in \(source.type == "Git" ? "Browser" : "Finder")")
-                                        .padding(.leading, 8)
-                                    }
-                                }
-                                .padding(.vertical, 4)
+                                )
                             }
                             .contextMenu {
                                 Button(role: .destructive) {
@@ -214,6 +136,97 @@ struct RegistryView: View {
             print("Error deleting source: \(error)")
             // TODO: Show error alert to user
         }
+    }
+}
+
+private struct RegistrySourceRow: View {
+    let source: SkillService.RegistrySource
+    let onDelete: () -> Void
+    let onOpen: () -> Void
+    
+    private var summaryText: String {
+        let preview = source.skills.prefix(2).joined(separator: ", ")
+        let extra = source.skills.count - 2
+        if extra > 0 {
+            return "\(preview) +\(extra)"
+        }
+        return preview
+    }
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            Image(systemName: source.type == "Git" ? "globe" : "folder")
+                .font(.title2)
+                .padding(10)
+                .background((source.type == "Git" ? Color.blue : Color.orange).opacity(0.1))
+                .foregroundColor(source.type == "Git" ? .blue : .orange)
+                .cornerRadius(8)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(source.path)
+                    .font(.headline)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                
+                HStack(spacing: 8) {
+                    Text(source.type)
+                        .font(.caption2)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background((source.type == "Git" ? Color.blue : Color.orange).opacity(0.1))
+                        .foregroundColor(source.type == "Git" ? .blue : .orange)
+                        .cornerRadius(4)
+                    
+                    if let lastChecked = source.lastChecked {
+                        Text("Checked \(lastChecked.formatted(date: .numeric, time: .shortened))")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            
+            Spacer()
+            
+            if !source.skills.isEmpty {
+                VStack(alignment: .trailing, spacing: 2) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "sparkles")
+                            .font(.caption)
+                        Text("\(source.skills.count)")
+                            .font(.headline)
+                    }
+                    .foregroundColor(.blue)
+                    
+                    Text(summaryText)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .frame(maxWidth: 150, alignment: .trailing)
+                }
+            } else {
+                Text("—")
+                    .foregroundStyle(.secondary)
+            }
+            
+            HStack(spacing: 0) {
+                Button(action: onDelete) {
+                    Image(systemName: "trash.circle")
+                        .foregroundColor(.red)
+                }
+                .buttonStyle(.borderless)
+                .help("Delete from App")
+                .padding(.leading, 8)
+                
+                Button(action: onOpen) {
+                    Image(systemName: source.type == "Git" ? "safari" : "folder")
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.borderless)
+                .help("Open in \(source.type == "Git" ? "Browser" : "Finder")")
+                .padding(.leading, 8)
+            }
+        }
+        .padding(.vertical, 4)
     }
 }
 
@@ -329,4 +342,3 @@ struct AddSourceSheet: View {
         }
     }
 }
-

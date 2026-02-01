@@ -97,8 +97,8 @@ jobs:
           MIN_OS=$(/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" "$APP_PLIST")
           echo "LSMinimumSystemVersion=$MIN_OS"
           
-          if [ "$MIN_OS" != "13.0" ]; then
-            echo "Expected LSMinimumSystemVersion=13.0 (update forks.xcodeproj if you intentionally change support)."
+          if [ "$MIN_OS" != "14.0" ]; then
+            echo "Expected LSMinimumSystemVersion=14.0 (update forks.xcodeproj if you intentionally change support)."
             exit 1
           fi
           

@@ -2,7 +2,7 @@
 
 A native macOS app for managing AI coding agent skills.
 
-![macOS](https://img.shields.io/badge/macOS-13.0+-blue)
+![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 
 ![Dashboard](screenshot/dashboard.png)
@@ -18,7 +18,7 @@ A native macOS app for managing AI coding agent skills.
 
 ## Install
 
-**Requirements:** macOS 13.0+, Node.js (`brew install node`)
+**Requirements:** macOS 14.0+, Node.js (`brew install node`)
 
 1. Download from [Releases](https://github.com/fxding/forks/releases)
 2. Move to Applications
