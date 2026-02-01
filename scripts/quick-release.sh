@@ -24,6 +24,17 @@ if [ -z "$VERSION" ]; then
     exit 1
 fi
 
+# Strip 'v' prefix if provided
+VERSION="${VERSION#v}"
+
+# Handle version bump keywords (patch, minor, major)
+case "$VERSION" in
+    patch|minor|major)
+        log_step "Bumping version (${VERSION})..."
+        VERSION=$("${SCRIPT_DIR}/bump-version.sh" "$VERSION")
+        ;;
+esac
+
 IS_BETA=false
 if [[ "$VERSION" == *"-beta"* ]] || [[ "$BETA_FLAG" == "--beta" ]]; then
     IS_BETA=true
