@@ -21,7 +21,7 @@
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>SUFeedURL</key>
-	<string>https://fxding.github.io/forks/appcast.xml</string>
+	<string>https://github.com/fxding/forks/releases/latest/download/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>tzbLh3NCyJ5GUNR4RUqrAe7orIg2JP2eQ9WYrWLLrbw=</string>
 </dict>
