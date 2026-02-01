@@ -1,102 +1,217 @@
-name: Build and Release
+name: Release
 
 on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 0.5.0 or 0.5.0-beta-1)'
+        required: true
+        type: string
 
-permissions:
-  contents: write
+env:
+  PROJECT_NAME: forks
+  SCHEME: forks
 
 jobs:
-  build:
-    name: Build macOS App
-    runs-on: macos-latest
-    
+  build-and-release:
+    runs-on: macos-15
+    permissions:
+      contents: write
+
     steps:
-      - name: Checkout code
+      # ===========================================
+      # 1. Checkout
+      # ===========================================
+      - name: Checkout
         uses: actions/checkout@v4
-      
-      - name: Select Xcode version
-        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-      
-      - name: Show Xcode version
-        run: xcodebuild -version
-      
-      - name: Build app
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ===========================================
+      # 2. Setup Xcode
+      # ===========================================
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.1'
+
+      # ===========================================
+      # 3. Extract version from tag or input
+      # ===========================================
+      - name: Get version
+        id: version
         run: |
-          xcodebuild -project forks.xcodeproj \
-            -scheme forks \
-            -configuration Release \
-            -derivedDataPath build \
-            -arch arm64 -arch x86_64 \
-            ONLY_ACTIVE_ARCH=NO \
-            CODE_SIGN_IDENTITY="-" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            build
-      
-      - name: Create app bundle
-        run: |
-          APP_PATH="build/Build/Products/Release/forks.app"
-          if [ -d "$APP_PATH" ]; then
-            cd build/Build/Products/Release
-            zip -r forks-macos.zip forks.app
-            mv forks-macos.zip ../../../../
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
           else
-            echo "App bundle not found at $APP_PATH"
-            find build -name "*.app" -type d
-            exit 1
+            VERSION="${GITHUB_REF#refs/tags/v}"
           fi
-      
-      - name: Get tag name
-        id: tag
-        run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          
+          # Check if beta
+          if [[ "$VERSION" == *"-beta"* ]] || [[ "$VERSION" == *"-alpha"* ]] || [[ "$VERSION" == *"-rc"* ]]; then
+            echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
+          else
+            echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "Releasing version: ${VERSION}"
 
-      - name: Setup Sparkle tools
+      # ===========================================
+      # 4. Bump version in Xcode project
+      # ===========================================
+      - name: Bump version
         run: |
-          echo "Installing Sparkle tools..."
-          mkdir -p tools/sparkle
-          # Download and extract just the binary tools needed
-          curl -L https://github.com/sparkle-project/Sparkle/releases/download/2.6.4/Sparkle-2.6.4.tar.xz | tar -xJ -C tools/sparkle
-          chmod +x ./tools/sparkle/bin/generate_appcast
+          chmod +x ./scripts/bump-version.sh
+          ./scripts/bump-version.sh "${{ steps.version.outputs.VERSION }}"
 
+      # ===========================================
+      # 5. Build
+      # ===========================================
+      - name: Build
+        run: |
+          chmod +x ./scripts/build.sh
+          ./scripts/build.sh
+
+      # ===========================================
+      # 6. Package (ZIP + DMG)
+      # ===========================================
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Package
+        run: |
+          chmod +x ./scripts/package.sh
+          ./scripts/package.sh
+
+      # ===========================================
+      # 7. Generate Appcast with Sparkle signing
+      # ===========================================
       - name: Generate Appcast
         env:
-          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
-          mkdir -p release_dist
-          cp forks-macos.zip release_dist/forks.zip
-          ./tools/sparkle/bin/generate_appcast release_dist
-          cp release_dist/appcast.xml appcast.xml
+          chmod +x ./scripts/generate-appcast-ci.sh
+          ./scripts/generate-appcast-ci.sh
 
-      - name: Commit Appcast
+      # ===========================================
+      # 8. Create tag (for workflow_dispatch)
+      # ===========================================
+      - name: Create tag
+        if: github.event_name == 'workflow_dispatch'
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add appcast.xml
-          git commit -m "Update appcast for ${{ steps.tag.outputs.TAG_NAME }} [skip ci]" || echo "No changes to commit"
-          git push origin main
-      
+          TAG_NAME="v${{ steps.version.outputs.VERSION }}"
+          if ! git tag -l | grep -q "^${TAG_NAME}$"; then
+            git tag -a "${TAG_NAME}" -m "Release ${{ steps.version.outputs.VERSION }}"
+            git push origin "${TAG_NAME}"
+          fi
+
+      # ===========================================
+      # 9. Create GitHub Release
+      # ===========================================
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          name: Forks ${{ steps.tag.outputs.TAG_NAME }}
-          draft: false
-          prerelease: false
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: ${{ env.PROJECT_NAME }} ${{ steps.version.outputs.VERSION }}
           files: |
-            forks-macos.zip
+            build/release/*.dmg
+            build/release/*.zip
+            build/release/appcast.xml
+          generate_release_notes: true
+          append_body: true
           body: |
-            ## Forks ${{ steps.tag.outputs.TAG_NAME }}
             
-            ### Installation
-            1. Download `forks-macos.zip`
-            2. Extract the zip file
-            3. Move `forks.app` to your Applications folder
-            4. Right-click and select "Open" (required for first launch since the app is not notarized)
-            
-            ### Requirements
-            - macOS 13.0 or later
-            - Node.js (for `npx skills` command)
+            ## Installation
+
+            Download `forks-${{ steps.version.outputs.VERSION }}.dmg` or `forks-${{ steps.version.outputs.VERSION }}.zip` below.
+
+            > ⚠️ **Note**: The app is not signed with an Apple Developer certificate. If macOS blocks the app, run:
+            > ```bash
+            > xattr -cr /Applications/forks.app
+            > ```
+          prerelease: ${{ steps.version.outputs.IS_PRERELEASE == 'true' }}
+
+      # ===========================================
+      # 10. Update latest stable release with merged appcast
+      # ===========================================
+      - name: Update latest stable appcast
+        if: steps.version.outputs.IS_PRERELEASE == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the latest stable release tag
+          LATEST_STABLE=$(gh release list --exclude-pre-releases --limit 1 --json tagName -q '.[0].tagName')
+          
+          if [ -n "$LATEST_STABLE" ]; then
+            echo "Updating appcast on latest stable release: $LATEST_STABLE"
+            
+            # Delete old appcast from stable release
+            gh release delete-asset "$LATEST_STABLE" appcast.xml --yes 2>/dev/null || true
+            
+            # Upload merged appcast to stable release
+            gh release upload "$LATEST_STABLE" build/release/appcast.xml --clobber
+            
+            echo "Updated appcast.xml on $LATEST_STABLE with merged entries"
+          else
+            echo "No stable release found to update"
+          fi
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Check if there are changes to commit
+          if git diff --quiet forks.xcodeproj/project.pbxproj; then
+            echo "No changes to commit"
+          else
+            git add forks.xcodeproj/project.pbxproj
+            git commit -m "chore: bump version to ${{ steps.version.outputs.VERSION }} [skip ci]"
+            
+            # Determine target branch with deterministic priority
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              # For manual dispatch, push to the branch that triggered the workflow
+              TARGET_BRANCH="${{ github.ref_name }}"
+            else
+              # For tag push, find branches containing HEAD with deterministic priority
+              # Priority: master > main > first available
+              BRANCHES=$(git branch -r --contains HEAD | grep -E 'origin/(master|main)' | sed 's|origin/||' | xargs)
+              
+              if echo "$BRANCHES" | grep -qw "master"; then
+                TARGET_BRANCH="master"
+              elif echo "$BRANCHES" | grep -qw "main"; then
+                TARGET_BRANCH="main"
+              else
+                # Fallback to main if neither found
+                TARGET_BRANCH="main"
+              fi
+            fi
+            
+            # Validate branch exists before pushing
+            if ! git rev-parse --verify "origin/${TARGET_BRANCH}" >/dev/null 2>&1; then
+              echo "Error: Branch ${TARGET_BRANCH} does not exist on remote"
+              exit 1
+            fi
+            
+            echo "Pushing to branch: ${TARGET_BRANCH}"
+            git push origin HEAD:"${TARGET_BRANCH}"
+          fi
+
+      # ===========================================
+      # 11. Summary
+      # ===========================================
+      - name: Summary
+        run: |
+          echo "## Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: v${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Pre-release**: ${{ steps.version.outputs.IS_PRERELEASE }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Assets" >> $GITHUB_STEP_SUMMARY
+          ls -la build/release/ >> $GITHUB_STEP_SUMMARY
