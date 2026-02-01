@@ -1,0 +1,2049 @@
+{
+  "version": "2.6",
+  "children": [
+    {
+      "type": "frame",
+      "id": "uJOP8",
+      "x": 0,
+      "y": 0,
+      "name": "Landing Page",
+      "clip": true,
+      "width": 1440,
+      "fill": "#0D0D0F",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "07BWF",
+          "name": "Header",
+          "width": "fill_container",
+          "height": 72,
+          "fill": "#0D0D0F",
+          "padding": [
+            0,
+            80
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "E5V2X",
+              "name": "Logo",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "jil6r",
+                  "name": "logoIcon",
+                  "fill": "#FF5C00",
+                  "content": "🍴",
+                  "fontFamily": "Inter",
+                  "fontSize": 28,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "3FiG0",
+                  "name": "logoText",
+                  "fill": "#FFFFFF",
+                  "content": "Forks",
+                  "fontFamily": "Inter",
+                  "fontSize": 22,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "73eD1",
+              "name": "Nav Links",
+              "gap": 40,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ro2Pf",
+                  "name": "navFeatures",
+                  "fill": "#A0A0A5",
+                  "content": "Features",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "L0ZcS",
+                  "name": "navScreenshots",
+                  "fill": "#A0A0A5",
+                  "content": "Screenshots",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "vsLrz",
+                  "name": "navAgents",
+                  "fill": "#A0A0A5",
+                  "content": "Agents",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "O2Srb",
+                  "name": "Download Button",
+                  "fill": "#FF5C00",
+                  "cornerRadius": 8,
+                  "gap": 8,
+                  "padding": [
+                    10,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "wqCFG",
+                      "name": "downloadText",
+                      "fill": "#FFFFFF",
+                      "content": "Download",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "mZw2S",
+          "name": "Hero Section",
+          "width": "fill_container",
+          "height": 800,
+          "layout": "vertical",
+          "gap": 32,
+          "padding": 80,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "npnbb",
+              "name": "Badge",
+              "fill": "rgba(255, 92, 0, 0.15)",
+              "cornerRadius": 100,
+              "gap": 8,
+              "padding": [
+                8,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "3JWx1",
+                  "name": "badgeIcon",
+                  "content": "✨",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "qlTD2",
+                  "name": "badgeText",
+                  "fill": "#FF5C00",
+                  "content": "Native macOS App",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Mj9p1",
+              "name": "Title Container",
+              "gap": 16,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "J7cMg",
+                  "name": "titleLine1",
+                  "fill": "#FFFFFF",
+                  "content": "Manage AI Coding Agent",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 64,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "UTS2a",
+                  "name": "titleLine2",
+                  "fill": "#FF5C00",
+                  "content": "Skills",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 64,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "0T1M2",
+              "name": "Subtitle",
+              "fill": "#8A8A8F",
+              "content": "A powerful native macOS app for installing, managing, and updating skills across 25+ AI coding agents. One app to rule them all.",
+              "lineHeight": 1.6,
+              "textAlign": "center",
+              "fontFamily": "Inter",
+              "fontSize": 18,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "Kyl1h",
+              "name": "CTA Buttons",
+              "gap": 16,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "98iJB",
+                  "name": "Primary Button",
+                  "fill": "#FF5C00",
+                  "cornerRadius": 12,
+                  "gap": 10,
+                  "padding": [
+                    16,
+                    32
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "TribS",
+                      "name": "primaryIcon",
+                      "fill": "#FFFFFF",
+                      "content": "⬇",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "J3nmE",
+                      "name": "primaryText",
+                      "fill": "#FFFFFF",
+                      "content": "Download for macOS",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "QE25J",
+                  "name": "Secondary Button",
+                  "fill": "transparent",
+                  "cornerRadius": 12,
+                  "gap": 10,
+                  "padding": [
+                    16,
+                    32
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "rFenE",
+                      "name": "secondaryText",
+                      "fill": "#FFFFFF",
+                      "content": "View on GitHub",
+                      "fontFamily": "Inter",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "XrkHe",
+              "name": "Requirements",
+              "gap": 24,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "7zJgM",
+                  "name": "req1",
+                  "fill": "#6A6A6F",
+                  "content": "macOS 13.0+",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "xXdQk",
+                  "name": "separator1",
+                  "fill": "#3A3A3F",
+                  "content": "•",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "p9gxY",
+                  "name": "req2",
+                  "fill": "#6A6A6F",
+                  "content": "Swift 5.9+",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "USoMX",
+                  "name": "separator2",
+                  "fill": "#3A3A3F",
+                  "content": "•",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "hRLE4",
+                  "name": "req3",
+                  "fill": "#6A6A6F",
+                  "content": "Node.js Required",
+                  "fontFamily": "Inter",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "pYdQR",
+              "name": "Screenshot Container",
+              "width": 900,
+              "height": 540,
+              "fill": "#1A1A1F",
+              "cornerRadius": 16,
+              "layout": "vertical",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "VcKd9",
+                  "name": "screenshotPlaceholder",
+                  "fill": "#4A4A4F",
+                  "content": "Dashboard Screenshot Placeholder",
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "yOwGm",
+          "name": "Features Section",
+          "width": "fill_container",
+          "fill": "#0D0D0F",
+          "layout": "vertical",
+          "gap": 64,
+          "padding": [
+            100,
+            80
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "QIGMv",
+              "name": "Section Header",
+              "layout": "vertical",
+              "gap": 16,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "al6mQ",
+                  "name": "featuresTitle",
+                  "fill": "#FFFFFF",
+                  "content": "Everything you need to manage AI Skills",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 44,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "Vt1oA",
+                  "name": "featuresSubtitle",
+                  "fill": "#8A8A8F",
+                  "content": "Forks provides a unified interface for managing skills across all major AI coding agents.",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ib0eP",
+              "name": "Features Grid",
+              "width": 1080,
+              "gap": 24,
+              "justifyContent": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "5WPa3",
+                  "name": "Feature Card 1",
+                  "width": 340,
+                  "height": 200,
+                  "fill": "#16161A",
+                  "cornerRadius": 16,
+                  "layout": "vertical",
+                  "gap": 16,
+                  "padding": 28,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "5jTcz",
+                      "name": "icon1",
+                      "content": "🤖",
+                      "fontFamily": "Inter",
+                      "fontSize": 36,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "UOVRw",
+                      "name": "title1",
+                      "fill": "#FFFFFF",
+                      "content": "25+ Agents",
+                      "fontFamily": "Inter",
+                      "fontSize": 20,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "qE0Cf",
+                      "name": "desc1",
+                      "fill": "#8A8A8F",
+                      "content": "Support for Cursor, Claude Code, Windsurf, Cline, Antigravity, Goose, and many more.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "M0M44",
+                  "name": "Feature Card 2",
+                  "width": 340,
+                  "height": 200,
+                  "fill": "#16161A",
+                  "cornerRadius": 16,
+                  "layout": "vertical",
+                  "gap": 16,
+                  "padding": 28,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "dObka",
+                      "name": "icon2",
+                      "content": "📦",
+                      "fontFamily": "Inter",
+                      "fontSize": 36,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "TXBtt",
+                      "name": "title2",
+                      "fill": "#FFFFFF",
+                      "content": "Install Skills",
+                      "fontFamily": "Inter",
+                      "fontSize": 20,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ECX60",
+                      "name": "desc2",
+                      "fill": "#8A8A8F",
+                      "content": "Install skills directly from GitHub repositories or local folders with one click.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "36O6l",
+                  "name": "Feature Card 3",
+                  "width": 340,
+                  "height": 200,
+                  "fill": "#16161A",
+                  "cornerRadius": 16,
+                  "layout": "vertical",
+                  "gap": 16,
+                  "padding": 28,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "QmFn8",
+                      "name": "icon3",
+                      "content": "📚",
+                      "fontFamily": "Inter",
+                      "fontSize": 36,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "jFWOq",
+                      "name": "title3",
+                      "fill": "#FFFFFF",
+                      "content": "Registry",
+                      "fontFamily": "Inter",
+                      "fontSize": 20,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "pTMLY",
+                      "name": "desc3",
+                      "fill": "#8A8A8F",
+                      "content": "Manage multiple skill sources with automatic update detection and notifications.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Xc10Y",
+                  "name": "Feature Card 4",
+                  "width": 340,
+                  "height": 200,
+                  "fill": "#16161A",
+                  "cornerRadius": 16,
+                  "layout": "vertical",
+                  "gap": 16,
+                  "padding": 28,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "BJWCY",
+                      "name": "icon4",
+                      "content": "📁",
+                      "fontFamily": "Inter",
+                      "fontSize": 36,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "G3Q2W",
+                      "name": "title4",
+                      "fill": "#FFFFFF",
+                      "content": "Projects",
+                      "fontFamily": "Inter",
+                      "fontSize": 20,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "pKRDm",
+                      "name": "desc4",
+                      "fill": "#8A8A8F",
+                      "content": "Install skills globally or per-project. Keep your workspace organized.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ryZrt",
+                  "name": "Feature Card 5",
+                  "width": 340,
+                  "height": 200,
+                  "fill": "#16161A",
+                  "cornerRadius": 16,
+                  "layout": "vertical",
+                  "gap": 16,
+                  "padding": 28,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "tda5K",
+                      "name": "icon5",
+                      "content": "🔍",
+                      "fontFamily": "Inter",
+                      "fontSize": 36,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "6K0jR",
+                      "name": "title5",
+                      "fill": "#FFFFFF",
+                      "content": "Search",
+                      "fontFamily": "Inter",
+                      "fontSize": 20,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "I7Gpj",
+                      "name": "desc5",
+                      "fill": "#8A8A8F",
+                      "content": "Find and discover skills from skills.sh with installation counts and ratings.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "xX5Yb",
+                  "name": "Feature Card 6",
+                  "width": 340,
+                  "height": 200,
+                  "fill": "#16161A",
+                  "cornerRadius": 16,
+                  "layout": "vertical",
+                  "gap": 16,
+                  "padding": 28,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "9kgk9",
+                      "name": "icon6",
+                      "content": "🔄",
+                      "fontFamily": "Inter",
+                      "fontSize": 36,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "qWxcx",
+                      "name": "title6",
+                      "fill": "#FFFFFF",
+                      "content": "Auto-Updates",
+                      "fontFamily": "Inter",
+                      "fontSize": 20,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Qrwid",
+                      "name": "desc6",
+                      "fill": "#8A8A8F",
+                      "content": "Built-in app updater via Sparkle keeps you always up to date.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "AuRN5",
+          "name": "Screenshots Section",
+          "width": "fill_container",
+          "fill": "#111114",
+          "layout": "vertical",
+          "gap": 64,
+          "padding": [
+            100,
+            80
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "earfZ",
+              "name": "Section Header",
+              "layout": "vertical",
+              "gap": 16,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "KrGNo",
+                  "name": "screenshotsTitle",
+                  "fill": "#FFFFFF",
+                  "content": "Beautiful Interface",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 44,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "5838b",
+                  "name": "screenshotsSubtitle",
+                  "fill": "#8A8A8F",
+                  "content": "A native macOS experience with a clean, intuitive design.",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "iWpEL",
+              "name": "Screenshots Grid",
+              "width": 1080,
+              "gap": 32,
+              "justifyContent": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "iRcl2",
+                  "name": "Screenshot Card 1",
+                  "width": 520,
+                  "layout": "vertical",
+                  "gap": 16,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "OBSTb",
+                      "name": "Screenshot Image",
+                      "width": "fill_container",
+                      "height": 320,
+                      "fill": "#1A1A1F",
+                      "cornerRadius": 12,
+                      "layout": "vertical",
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "ue0Qf",
+                          "name": "screenshot1Placeholder",
+                          "fill": "#4A4A4F",
+                          "content": "Dashboard",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "1yvAX",
+                      "name": "Screenshot Info",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "mPSMT",
+                          "name": "screenshot1Title",
+                          "fill": "#FFFFFF",
+                          "content": "Dashboard",
+                          "fontFamily": "Inter",
+                          "fontSize": 16,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "CYFeQ",
+                          "name": "screenshot1Desc",
+                          "fill": "#8A8A8F",
+                          "content": "Overview of skills, agents, and projects",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "MBGdZ",
+                  "name": "Screenshot Card 2",
+                  "width": 520,
+                  "layout": "vertical",
+                  "gap": 16,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "UnSx8",
+                      "name": "Screenshot Image",
+                      "width": "fill_container",
+                      "height": 320,
+                      "fill": "#1A1A1F",
+                      "cornerRadius": 12,
+                      "layout": "vertical",
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "g9dc9",
+                          "name": "screenshot2Placeholder",
+                          "fill": "#4A4A4F",
+                          "content": "Agents",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "lwxg9",
+                      "name": "Screenshot Info",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "3Qgal",
+                          "name": "screenshot2Title",
+                          "fill": "#FFFFFF",
+                          "content": "Agents",
+                          "fontFamily": "Inter",
+                          "fontSize": 16,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "2j1g6",
+                          "name": "screenshot2Desc",
+                          "fill": "#8A8A8F",
+                          "content": "Manage all supported AI coding agents",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Otlw3",
+                  "name": "Screenshot Card 3",
+                  "width": 520,
+                  "layout": "vertical",
+                  "gap": 16,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "3I2lf",
+                      "name": "Screenshot Image",
+                      "width": "fill_container",
+                      "height": 320,
+                      "fill": "#1A1A1F",
+                      "cornerRadius": 12,
+                      "layout": "vertical",
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "ZEAhp",
+                          "name": "screenshot3Placeholder",
+                          "fill": "#4A4A4F",
+                          "content": "Search",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "C9Zmi",
+                      "name": "Screenshot Info",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "gnqzD",
+                          "name": "screenshot3Title",
+                          "fill": "#FFFFFF",
+                          "content": "Search",
+                          "fontFamily": "Inter",
+                          "fontSize": 16,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "06roA",
+                          "name": "screenshot3Desc",
+                          "fill": "#8A8A8F",
+                          "content": "Discover new skills from the community",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "gjbXM",
+                  "name": "Screenshot Card 4",
+                  "width": 520,
+                  "layout": "vertical",
+                  "gap": 16,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "dn89h",
+                      "name": "Screenshot Image",
+                      "width": "fill_container",
+                      "height": 320,
+                      "fill": "#1A1A1F",
+                      "cornerRadius": 12,
+                      "layout": "vertical",
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "t6eey",
+                          "name": "screenshot4Placeholder",
+                          "fill": "#4A4A4F",
+                          "content": "Registry",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "tQgOP",
+                      "name": "Screenshot Info",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "2WcKD",
+                          "name": "screenshot4Title",
+                          "fill": "#FFFFFF",
+                          "content": "Registry",
+                          "fontFamily": "Inter",
+                          "fontSize": 16,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "uYs9g",
+                          "name": "screenshot4Desc",
+                          "fill": "#8A8A8F",
+                          "content": "Manage skill sources and updates",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "dCMFp",
+          "name": "Agents Section",
+          "width": "fill_container",
+          "fill": "#0D0D0F",
+          "layout": "vertical",
+          "gap": 48,
+          "padding": [
+            100,
+            80
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "K5Nbo",
+              "name": "Section Header",
+              "layout": "vertical",
+              "gap": 16,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "ANOb9",
+                  "name": "Title",
+                  "gap": 12,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "mPnj7",
+                      "name": "agentsTitleNum",
+                      "fill": "#FF5C00",
+                      "content": "25+",
+                      "fontFamily": "Inter",
+                      "fontSize": 44,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "QM8JB",
+                      "name": "agentsTitleText",
+                      "fill": "#FFFFFF",
+                      "content": "Supported Agents",
+                      "fontFamily": "Inter",
+                      "fontSize": 44,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "Bc1fK",
+                  "name": "agentsSubtitle",
+                  "fill": "#8A8A8F",
+                  "content": "Works with all major AI coding agents out of the box.",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "rEIpD",
+              "name": "Agents Cloud",
+              "width": 900,
+              "gap": 12,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "rM3w6",
+                  "name": "Badge",
+                  "fill": "rgba(249, 115, 22, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "diKbX",
+                      "name": "badge1Text",
+                      "fill": "#f97316",
+                      "content": "Antigravity",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "CPU7J",
+                  "name": "Badge",
+                  "fill": "rgba(217, 119, 6, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "KXndG",
+                      "name": "badge2Text",
+                      "fill": "#d97706",
+                      "content": "Claude Code",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Q6sQI",
+                  "name": "Badge",
+                  "fill": "rgba(16, 185, 129, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "AjE7v",
+                      "name": "badge3Text",
+                      "fill": "#10b981",
+                      "content": "Cline",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "BZQGq",
+                  "name": "Badge",
+                  "fill": "rgba(59, 130, 246, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Psiih",
+                      "name": "badge4Text",
+                      "fill": "#3b82f6",
+                      "content": "CodeBuddy",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "kGEWC",
+                  "name": "Badge",
+                  "fill": "rgba(139, 92, 246, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "eKiPD",
+                      "name": "badge5Text",
+                      "fill": "#8b5cf6",
+                      "content": "Codex",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "e15d8",
+                  "name": "Badge",
+                  "fill": "rgba(249, 115, 22, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "bHSUw",
+                      "name": "badge6Text",
+                      "fill": "#f97316",
+                      "content": "Command Code",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "LMOpw",
+                  "name": "Badge",
+                  "fill": "rgba(236, 72, 153, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "jl1IZ",
+                      "name": "badge7Text",
+                      "fill": "#ec4899",
+                      "content": "Continue",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "CIZDK",
+                  "name": "Badge",
+                  "fill": "rgba(245, 158, 11, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "wvJdD",
+                      "name": "badge8Text",
+                      "fill": "#f59e0b",
+                      "content": "Crush",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "S0y77",
+                  "name": "Badge",
+                  "fill": "rgba(99, 102, 241, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "MeZlP",
+                      "name": "badge9Text",
+                      "fill": "#6366f1",
+                      "content": "Cursor",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "mrigw",
+                  "name": "Badge",
+                  "fill": "rgba(16, 185, 129, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "4wsQM",
+                      "name": "badge10Text",
+                      "fill": "#10b981",
+                      "content": "Droid",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "vgGxe",
+                  "name": "Badge",
+                  "fill": "rgba(59, 130, 246, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "rhfd3",
+                      "name": "badge11Text",
+                      "fill": "#3b82f6",
+                      "content": "Gemini CLI",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ORc3s",
+                  "name": "Badge",
+                  "fill": "rgba(34, 211, 238, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Z172x",
+                      "name": "badge12Text",
+                      "fill": "#22d3ee",
+                      "content": "GitHub Copilot",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "dfzTL",
+                  "name": "Badge",
+                  "fill": "rgba(249, 115, 22, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "jLMvJ",
+                      "name": "badge13Text",
+                      "fill": "#f97316",
+                      "content": "Goose",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ZSOhy",
+                  "name": "Badge",
+                  "fill": "rgba(236, 72, 153, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "bWgt4",
+                      "name": "badge14Text",
+                      "fill": "#ec4899",
+                      "content": "Junie",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "4lLZ6",
+                  "name": "Badge",
+                  "fill": "rgba(139, 92, 246, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "BFCr3",
+                      "name": "badge15Text",
+                      "fill": "#8b5cf6",
+                      "content": "Kilo Code",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Q0yoS",
+                  "name": "Badge",
+                  "fill": "rgba(59, 130, 246, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ucxE1",
+                      "name": "badge16Text",
+                      "fill": "#3b82f6",
+                      "content": "Kiro CLI",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "hNzwU",
+                  "name": "Badge",
+                  "fill": "rgba(16, 185, 129, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "QTSFO",
+                      "name": "badge17Text",
+                      "fill": "#10b981",
+                      "content": "Kode",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "sdJLF",
+                  "name": "Badge",
+                  "fill": "rgba(245, 158, 11, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "KpwVO",
+                      "name": "badge18Text",
+                      "fill": "#f59e0b",
+                      "content": "MCPJam",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "7Ws6H",
+                  "name": "Badge",
+                  "fill": "rgba(236, 72, 153, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "dMNBA",
+                      "name": "badge19Text",
+                      "fill": "#ec4899",
+                      "content": "Mux",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "mXfPm",
+                  "name": "Badge",
+                  "fill": "rgba(99, 102, 241, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "PNH2T",
+                      "name": "badge20Text",
+                      "fill": "#6366f1",
+                      "content": "Neovatr",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Kw1Uj",
+                  "name": "Badge",
+                  "fill": "rgba(59, 130, 246, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "5sMsn",
+                      "name": "badge21Text",
+                      "fill": "#3b82f6",
+                      "content": "OpenCode",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "IBJWg",
+                  "name": "Badge",
+                  "fill": "rgba(139, 92, 246, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "GTKTP",
+                      "name": "badge22Text",
+                      "fill": "#8b5cf6",
+                      "content": "Roo Code",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "79rOc",
+                  "name": "Badge",
+                  "fill": "rgba(34, 211, 238, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Dafru",
+                      "name": "badge23Text",
+                      "fill": "#22d3ee",
+                      "content": "Windsurf",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "E74Pd",
+                  "name": "Badge",
+                  "fill": "rgba(245, 158, 11, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "k4d5e",
+                      "name": "badge24Text",
+                      "fill": "#f59e0b",
+                      "content": "Zed",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fxLlR",
+                  "name": "Badge",
+                  "fill": "rgba(16, 185, 129, 0.15)",
+                  "cornerRadius": 100,
+                  "padding": [
+                    8,
+                    16
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "vOpcO",
+                      "name": "badge25Text",
+                      "fill": "#10b981",
+                      "content": "ZenCoder",
+                      "fontFamily": "Inter",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "TFndB",
+          "name": "Install Section",
+          "width": "fill_container",
+          "fill": "#111114",
+          "layout": "vertical",
+          "padding": [
+            100,
+            80
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "BEet4",
+              "name": "Install Card",
+              "width": 900,
+              "fill": "#16161A",
+              "cornerRadius": 24,
+              "layout": "vertical",
+              "gap": 40,
+              "padding": 64,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "7UffA",
+                  "name": "installTitle",
+                  "fill": "#FFFFFF",
+                  "content": "Ready to get started?",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 36,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "dbjdT",
+                  "name": "installDesc",
+                  "fill": "#8A8A8F",
+                  "content": "Download Forks and start managing your AI coding skills in minutes.",
+                  "textAlign": "center",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "O6ast",
+                  "name": "Steps",
+                  "width": "fill_container",
+                  "gap": 48,
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "tN4MY",
+                      "name": "Step 1",
+                      "width": 180,
+                      "layout": "vertical",
+                      "gap": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "JVOQt",
+                          "name": "Number",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "#FF5C00",
+                          "cornerRadius": 100,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "gVNRO",
+                              "name": "step1NumText",
+                              "fill": "#FFFFFF",
+                              "content": "1",
+                              "fontFamily": "Inter",
+                              "fontSize": 20,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "XLJ6U",
+                          "name": "step1Title",
+                          "fill": "#FFFFFF",
+                          "content": "Download",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 16,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "B9I7l",
+                          "name": "step1Desc",
+                          "fill": "#8A8A8F",
+                          "content": "Get the latest release from GitHub",
+                          "lineHeight": 1.4,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ndx3K",
+                      "name": "Step 2",
+                      "width": 180,
+                      "layout": "vertical",
+                      "gap": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "I9hoz",
+                          "name": "Number",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "rgba(255, 92, 0, 0.2)",
+                          "cornerRadius": 100,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "HQKYb",
+                              "name": "step2NumText",
+                              "fill": "#FF5C00",
+                              "content": "2",
+                              "fontFamily": "Inter",
+                              "fontSize": 20,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "eEagb",
+                          "name": "step2Title",
+                          "fill": "#FFFFFF",
+                          "content": "Install",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 16,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "LNMmG",
+                          "name": "step2Desc",
+                          "fill": "#8A8A8F",
+                          "content": "Move to Applications folder",
+                          "lineHeight": 1.4,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "gf2C9",
+                      "name": "Step 3",
+                      "width": 180,
+                      "layout": "vertical",
+                      "gap": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "fRAwp",
+                          "name": "Number",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "rgba(255, 92, 0, 0.2)",
+                          "cornerRadius": 100,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "lVrEP",
+                              "name": "step3NumText",
+                              "fill": "#FF5C00",
+                              "content": "3",
+                              "fontFamily": "Inter",
+                              "fontSize": 20,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "vCugh",
+                          "name": "step3Title",
+                          "fill": "#FFFFFF",
+                          "content": "Launch",
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 16,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "z2BpI",
+                          "name": "step3Desc",
+                          "fill": "#8A8A8F",
+                          "content": "Start managing your skills!",
+                          "lineHeight": 1.4,
+                          "textAlign": "center",
+                          "fontFamily": "Inter",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "REsze",
+                  "name": "Code Block",
+                  "width": "fill_container",
+                  "fill": "#0D0D0F",
+                  "cornerRadius": 12,
+                  "layout": "vertical",
+                  "padding": 20,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "cCGHY",
+                      "name": "codeComment",
+                      "fill": "#6A6A6F",
+                      "content": "# If blocked by Gatekeeper:",
+                      "fontFamily": "JetBrains Mono, monospace",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "goi3E",
+                      "name": "codeCommand",
+                      "fill": "#FF5C00",
+                      "content": "xattr -cr /Applications/forks.app",
+                      "fontFamily": "JetBrains Mono, monospace",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "YwQjB",
+                  "name": "Download Button Large",
+                  "fill": "#FF5C00",
+                  "cornerRadius": 12,
+                  "gap": 12,
+                  "padding": [
+                    18,
+                    40
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "3aMk6",
+                      "name": "downloadBtnIcon",
+                      "fill": "#FFFFFF",
+                      "content": "⬇",
+                      "fontFamily": "Inter",
+                      "fontSize": 18,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "xqeXU",
+                      "name": "downloadBtnText",
+                      "fill": "#FFFFFF",
+                      "content": "Download Latest Release",
+                      "fontFamily": "Inter",
+                      "fontSize": 18,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "3Lvzq",
+          "name": "Footer",
+          "width": "fill_container",
+          "height": 120,
+          "fill": "#0A0A0C",
+          "padding": [
+            0,
+            80
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "hqoF4",
+              "name": "Brand",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "xX93f",
+                  "name": "footerLogo",
+                  "content": "🍴",
+                  "fontFamily": "Inter",
+                  "fontSize": 24,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "N7lge",
+                  "name": "footerName",
+                  "fill": "#FFFFFF",
+                  "content": "Forks",
+                  "fontFamily": "Inter",
+                  "fontSize": 18,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "jbzpf",
+              "name": "Links",
+              "gap": 32,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "iUnuY",
+                  "name": "link1",
+                  "fill": "#8A8A8F",
+                  "content": "GitHub",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "UjaIt",
+                  "name": "link2",
+                  "fill": "#8A8A8F",
+                  "content": "Releases",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "LBepD",
+                  "name": "link3",
+                  "fill": "#8A8A8F",
+                  "content": "Issues",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "p2tuL",
+              "name": "footerCopyright",
+              "fill": "#6A6A6F",
+              "content": "MIT License © 2025",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
