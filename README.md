@@ -9,7 +9,7 @@ A native macOS app for managing AI coding agent skills.
 
 ## Features
 
-- **25+ Agents** — Cursor, Claude Code, Windsurf, Cline, Antigravity, Goose, and [more](AGENTS.md)
+- **25+ Agents** — Cursor, Claude Code, Windsurf, Cline, Antigravity, Goose, and more.
 - **Install Skills** — From GitHub repos or local folders
 - **Registry** — Manage multiple skill sources with update detection
 - **Projects** — Install skills globally or per-project
