@@ -1,0 +1,7 @@
+# Robots.txt for Forks
+# https://fxding.github.io/forks/
+
+User-agent: *
+Allow: /
+
+Sitemap: https://fxding.github.io/forks/sitemap.xml
