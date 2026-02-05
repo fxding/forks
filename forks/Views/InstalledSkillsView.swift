@@ -245,22 +245,10 @@ struct SkillRow: View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
                 // Skill name with update badge
-                ZStack(alignment: .topTrailing) {
-                    Text(skill.name)
-                        .font(.headline)
-                        .lineLimit(1)
-                        .foregroundColor(.primary)
-                    
-                    // Green dot badge for updates
-                    if skill.updateAvailable {
-                        Circle()
-                            .fill(Color.green)
-                            .frame(width: 10, height: 10)
-                            .offset(x: 5, y: -5)
-                            .transition(.scale.combined(with: .opacity))
-                    }
-                }
-                .padding(.trailing, skill.updateAvailable ? 8 : 0)
+                Text(skill.name)
+                    .font(.headline)
+                    .lineLimit(1)
+                    .foregroundColor(.primary)
                 
                 if let desc = skill.description {
                     Text(desc)
@@ -270,6 +258,7 @@ struct SkillRow: View {
                         .multilineTextAlignment(.leading)
                 }
             }
+            .padding(.trailing, 0)
             
             Spacer()
             

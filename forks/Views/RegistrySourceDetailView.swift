@@ -1,14 +1,22 @@
 import SwiftUI
 
 struct RegistrySourceDetailView: View {
-    let source: SkillService.RegistrySource
+    // We iterate over sources in parent, so we passing it here as a value might be stale if parent doesn't redraw correctly?
+    // Actually we probably want to look it up from service to be sure.
+    let sourceId: String
     @ObservedObject var skillService: SkillService
+    
+    var source: SkillService.RegistrySource {
+        skillService.registrySources.first(where: { $0.id == sourceId }) ?? SkillService.RegistrySource(id: "unknown", type: "Unknown", path: "Unknown", updateAvailable: false, lastChecked: nil, skills: [])
+    }
     
     @State private var availableSkills: [Skill] = []
     @State private var selectedSkillNames: Set<String> = []
     @State private var searchText = ""
     @State private var showInstallSheet = false
-    @State private var isLoading = false
+    @State private var isLoadingSkills = false
+    @State private var isUpdating = false
+    @State private var showUpdateCompleteAlert = false
     
     var filteredSkills: [Skill] {
         if searchText.isEmpty {
@@ -53,6 +61,25 @@ struct RegistrySourceDetailView: View {
                 Spacer()
                 
                 HStack(spacing: 12) {
+                    if source.updateAvailable {
+                        Button("Update All") {
+                            // Update all skills logic
+                            isUpdating = true
+                            Task {
+                                do {
+                                    try await skillService.updateAllSkillsInSource(source: source.path)
+                                    showUpdateCompleteAlert = true
+                                } catch {
+                                    print("Failed to update all: \(error)")
+                                    isUpdating = false // Dismiss only on error
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundColor(.green)
+                        .disabled(isUpdating)
+                    }
+                    
                     Button(selectedSkillNames.count == filteredSkills.count && !filteredSkills.isEmpty ? "Deselect All" : "Select All") {
                         if selectedSkillNames.count == filteredSkills.count {
                             selectedSkillNames.removeAll()
@@ -76,7 +103,7 @@ struct RegistrySourceDetailView: View {
             .overlay(Divider(), alignment: .bottom)
             
             // Skills List
-            if isLoading {
+            if isLoadingSkills {
                 VStack {
                     Spacer()
                     ProgressView("Loading skills...")
@@ -120,17 +147,47 @@ struct RegistrySourceDetailView: View {
                 }
             )
         }
+
+        .sheet(isPresented: $isUpdating) {
+            VStack(spacing: 20) {
+                if showUpdateCompleteAlert {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 48))
+                        .foregroundColor(.green)
+                    Text("Update Complete")
+                        .font(.headline)
+                    Text("All installed skills have been updated.")
+                        .font(.body)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.secondary)
+                    
+                    Button("OK") {
+                        showUpdateCompleteAlert = false
+                        isUpdating = false
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .padding(.top, 10)
+                } else {
+                    ProgressView()
+                        .controlSize(.large)
+                    Text("Updating, please wait...")
+                        .font(.headline)
+                }
+            }
+            .padding(40)
+            .frame(width: 300, height: 250)
+        }
     }
     
     private func loadSkills() {
-        isLoading = true
+        isLoadingSkills = true
         Task {
             let skills = await Task.detached {
                 await MainActor.run { skillService.getSkillsInSource(source: source.path) }
             }.value
             await MainActor.run {
                 self.availableSkills = skills
-                self.isLoading = false
+                self.isLoadingSkills = false
             }
         }
     }

@@ -90,7 +90,7 @@ struct RegistryView: View {
                  }
             }
             .navigationDestination(for: SkillService.RegistrySource.self) { source in
-                RegistrySourceDetailView(source: source, skillService: skillService)
+                RegistrySourceDetailView(sourceId: source.id, skillService: skillService)
             }
             .confirmationDialog("Delete from App?", isPresented: .init(
                 get: { showDeleteSourceConfirm != nil },
@@ -161,6 +161,15 @@ private struct RegistrySourceRow: View {
                 .background((source.type == "Git" ? Color.blue : Color.orange).opacity(0.1))
                 .foregroundColor(source.type == "Git" ? .blue : .orange)
                 .cornerRadius(8)
+                .overlay(alignment: .topTrailing) {
+                     if source.updateAvailable {
+                         Circle()
+                             .fill(Color.green)
+                             .frame(width: 10, height: 10)
+                             .offset(x: 3, y: -3)
+                             .shadow(color: .black.opacity(0.2), radius: 1, x: 0, y: 1)
+                     }
+                }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(source.path)
