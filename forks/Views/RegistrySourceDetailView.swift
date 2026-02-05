@@ -12,7 +12,9 @@ struct RegistrySourceDetailView: View {
     
     @State private var availableSkills: [Skill] = []
     @State private var selectedSkillNames: Set<String> = []
-    @State private var searchText = ""
+    // Use binding to service to persist
+    @State private var searchText: String = ""
+
     @State private var showInstallSheet = false
     @State private var isLoadingSkills = false
     @State private var isUpdating = false
@@ -134,7 +136,14 @@ struct RegistrySourceDetailView: View {
         .navigationTitle("Source Details")
         .searchable(text: $searchText)
         .onAppear {
+            let persistedFilter = skillService.sourceFilterText
+            if searchText != persistedFilter {
+                searchText = persistedFilter
+            }
             loadSkills()
+        }
+        .onChange(of: searchText) { newValue in
+            skillService.sourceFilterText = newValue
         }
         .sheet(isPresented: $showInstallSheet) {
             InstallSheet(
@@ -182,8 +191,8 @@ struct RegistrySourceDetailView: View {
     private func loadSkills() {
         isLoadingSkills = true
         Task {
-            let skills = await Task.detached {
-                await MainActor.run { skillService.getSkillsInSource(source: source.path) }
+            let skills = await Task.detached(priority: .userInitiated) {
+                self.skillService.getSkillsInSource(source: self.source.path)
             }.value
             await MainActor.run {
                 self.availableSkills = skills

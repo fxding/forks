@@ -38,3 +38,15 @@ struct SkillMetadata: Codable {
     var internalSkill: Bool? // Optional internal flag
 }
 
+struct SearchSkill: Identifiable, Decodable {
+    let id: String
+    let name: String
+    let installs: Int
+    let topSource: String?
+    
+    var source: String { topSource ?? "" }
+}
+
+struct SearchResponse: Decodable {
+    let skills: [SearchSkill]
+}

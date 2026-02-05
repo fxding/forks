@@ -2,19 +2,6 @@ import SwiftUI
 import Combine
 import Foundation
 
-struct SearchSkill: Identifiable, Decodable {
-    let id: String
-    let name: String
-    let installs: Int
-    let topSource: String?
-    
-    var source: String { topSource ?? "" }
-}
-
-struct SearchResponse: Decodable {
-    let skills: [SearchSkill]
-}
-
 @MainActor
 class SkillSearchViewModel: ObservableObject {
     @Published var skills: [SearchSkill] = []
@@ -23,12 +10,25 @@ class SkillSearchViewModel: ObservableObject {
     @Published var errorMessage: String?
     
     private var debounceTimer: Timer?
+    private weak var skillService: SkillService?
+    
+    init(skillService: SkillService? = nil) {
+        self.skillService = skillService
+        if let service = skillService {
+            self.searchText = service.globalSearchQuery
+            self.skills = service.globalSearchResults
+        }
+    }
     
     func search(query: String) {
+        // Sync to service
+        skillService?.globalSearchQuery = query
+        
         debounceTimer?.invalidate()
         
         guard query.count >= 2 else {
             skills = []
+            skillService?.globalSearchResults = []
             return
         }
         
@@ -51,6 +51,7 @@ class SkillSearchViewModel: ObservableObject {
             let (data, _) = try await URLSession.shared.data(from: url)
             let result = try JSONDecoder().decode(SearchResponse.self, from: data)
             self.skills = result.skills
+            self.skillService?.globalSearchResults = result.skills
             self.isLoading = false
         } catch {
             self.errorMessage = error.localizedDescription
@@ -60,9 +61,15 @@ class SkillSearchViewModel: ObservableObject {
 }
 
 struct SkillSearchView: View {
-    @StateObject private var viewModel = SkillSearchViewModel()
+    @StateObject private var viewModel: SkillSearchViewModel
     @ObservedObject var skillService: SkillService
     @ObservedObject var projectService: ProjectService
+    
+    init(skillService: SkillService, projectService: ProjectService) {
+        self.skillService = skillService
+        self.projectService = projectService
+        _viewModel = StateObject(wrappedValue: SkillSearchViewModel(skillService: skillService))
+    }
     
     @StateObject private var agentService = AgentService()
     

@@ -11,6 +11,13 @@ class SkillService: ObservableObject {
     @Published var logs: String = ""
     @Published var isCancelled: Bool = false
     
+    // Global Search Persistence
+    @Published var globalSearchQuery: String = ""
+    @Published var globalSearchResults: [SearchSkill] = []
+    
+    // Source Detail Persistence
+    @Published var sourceFilterText: String = ""
+    
     private let forksDir = NSString(string: "~/.forks").expandingTildeInPath
     private var currentProcess: Process?
     
@@ -166,7 +173,10 @@ class SkillService: ObservableObject {
             }
         }
 
-        self.availableSkills = Array(skillMap.values).sorted { $0.name < $1.name }
+        let sortedSkills = Array(skillMap.values).sorted { $0.name < $1.name }
+        await MainActor.run {
+            self.availableSkills = sortedSkills
+        }
     }
 
     private func discoverSkills(in searchPath: String) -> [Skill] {
