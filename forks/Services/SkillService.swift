@@ -901,7 +901,33 @@ class SkillService: ObservableObject {
     }
 
     private func getGitUrl(for source: String) -> String {
-        (!source.contains("://") && !source.hasPrefix("git@")) ? "https://github.com/\(source).git" : source
+        if source.isEmpty { return source }
+
+        if source.contains("://") || source.hasPrefix("git@") {
+            return source
+        }
+
+        // Handle explicit subdirectory in the source string (e.g. "owner/repo/subdir")
+        // We only want to clone the repo part
+        let components = source.split(separator: "/")
+        if components.count >= 2 {
+            let owner = components[0]
+            var repo = String(components[1])
+
+            // Avoid .git.git if source was "owner/repo.git/subdir"
+            if repo.hasSuffix(".git") {
+                repo = String(repo.dropLast(4))
+            }
+
+            return "https://github.com/\(owner)/\(repo).git"
+        }
+
+        // Handle "owner/repo" or "repo" shorthand
+        var repo = source
+        if repo.hasSuffix(".git") {
+            repo = String(repo.dropLast(4))
+        }
+        return "https://github.com/\(repo).git"
     }
     
     // MARK: - Update Logic
